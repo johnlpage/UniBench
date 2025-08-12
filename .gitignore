@@ -1,0 +1,8 @@
+target/*
+# IntelliJ run/debug configs  
+.idea/runConfigurations/  
+.idea/workspace.xml  
+.run/  
+.env
+
+
