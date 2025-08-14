@@ -1,0 +1,6 @@
+# Usage
+
+```shell
+npm install
+
+```

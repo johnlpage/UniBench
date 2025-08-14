@@ -39,8 +39,9 @@ public class AtlasClusterManager {
 
   public void createCluster(String clusterName, String tier) throws Exception {
     int isClusterReady = isClusterReady(clusterName);
+
     if (isClusterReady == 200) {
-      System.out.println("Cluster already exists and is ready: " + clusterName);
+      logger.info("Cluster already exists and is ready: " + clusterName);
       return;
     }
     // It does not exist
@@ -48,7 +49,21 @@ public class AtlasClusterManager {
       String url = baseUrl + "/groups/" + projectId + "/clusters";
       String payload =
           String.format(
-              "{ \"name\": \"%s\", \"clusterType\": \"REPLICASET\", \"providerSettings\": { \"providerName\": \"AWS\", \"regionName\": \"EU_WEST_1\", \"instanceSizeName\": \"%s\" } }",
+              """
+    {
+      "name": "%s",
+      "clusterType": "REPLICASET",
+      "providerSettings": {
+        "providerName": "AWS",
+        "regionName": "EU_WEST_1",
+        "instanceSizeName": "%s"
+      },
+      "autoScaling": {
+        "diskGBEnabled": false,
+        "compute": { "enabled": false }
+      }
+    }
+    """,
               clusterName, tier);
 
       HttpPost request = new HttpPost(url);
@@ -60,7 +75,7 @@ public class AtlasClusterManager {
       if (statusCode >= 300) {
         throw new IOException("Failed to create cluster: " + response.getStatusLine());
       }
-      System.out.println("Cluster creation initiated for: " + clusterName);
+      logger.info("Cluster creation initiated for: " + clusterName);
     }
 
     blockUntilClusterReady(clusterName, true);
@@ -86,20 +101,20 @@ public class AtlasClusterManager {
   }
 
   public void blockUntilClusterReady(String clusterName, boolean state) throws Exception {
-    System.out.println("Polling cluster status for: " + clusterName);
+    logger.info("Polling cluster status for: " + clusterName);
     int tries = 0;
     while (tries < 100) {
       tries++;
-      if (state && isClusterReady(clusterName) == 200) {
-        System.out.println("Cluster is up and ready: " + clusterName);
+      int clusterReady = isClusterReady(clusterName);
+      if (state && clusterReady == 200) {
+        logger.info("Cluster is up and ready: " + clusterName);
         return;
       }
-      if (!state && isClusterReady(clusterName) == 404) {
-        System.out.println("Cluster is now down: " + clusterName);
+      if (!state && clusterReady == 404) {
+        logger.info("Cluster is now down: " + clusterName);
         return;
       }
-      System.out.println(
-          "Waiting for cluster to be " + (state ? "ready" : "deleted") + "(" + tries + ")");
+      logger.info("Waiting for cluster to be " + (state ? "ready" : "deleted") + "(" + tries + ")");
       TimeUnit.SECONDS.sleep(30);
     }
     throw new RuntimeException("Timeout waiting for cluster to be ready.");
@@ -111,13 +126,13 @@ public class AtlasClusterManager {
     HttpResponse response = httpClient.execute(request);
     int statusCode = response.getStatusLine().getStatusCode();
     if (statusCode == 404) {
-      System.out.println("Cluster not found: " + clusterName);
+      logger.info("Cluster not found: " + clusterName);
       return;
     }
     if (statusCode >= 300) {
       throw new IOException("Failed to delete cluster: " + response.getStatusLine());
     }
-    System.out.println("Cluster deletion initiated for: " + clusterName);
+    logger.info("Cluster deletion initiated for: " + clusterName);
     blockUntilClusterReady(clusterName, false);
   }
 

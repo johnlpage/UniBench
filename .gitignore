@@ -6,3 +6,5 @@ target/*
 .env
 
 
+reporting/node_modules/
+reporting/package-lock.json

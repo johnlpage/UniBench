@@ -85,10 +85,13 @@ public class BenchmarkController {
 
   void runTest(String testConfigFile) {
     Document testConfig = readConfigFile(testConfigFile);
+    testConfig.append(
+        "filename", testConfigFile.replaceAll(".*[/\\\\]([^./\\\\]+)\\.[^/\\\\]*$", "$1"));
 
     try {
       @SuppressWarnings("rawtypes")
       Class testClass = Class.forName(testConfig.getString("testClassName"));
+      testConfig.put("variant", new Document());
       BaseMongoTest test =
           (BaseMongoTest)
               testClass.getDeclaredConstructors()[0].newInstance(mongoClient, testConfig, 0, 0);
@@ -99,12 +102,13 @@ public class BenchmarkController {
       test.WarmCache();
 
       int numberOfThreads = testConfig.getInteger("numberOfThreads", 20);
-      for (String testMode : testConfig.getList("testModes", String.class)) {
-        testConfig.put(
-            "mode",
-            testMode); // Set the mode parameter to whatever mode we want - this cna be used to
-        // set groups of parameters - like running againast an empty or prepopulated collection
 
+      for (Document variant : testConfig.getList("variants", Document.class)) {
+        testConfig.put(
+            "variant",
+            variant); // Set the mode parameter to whatever mode we want - this cna be used to
+        // set groups of parameters - like running againast an empty or prepopulated collection
+        logger.info("Running variant " + variant.toJson());
         /* Use this for any pre-run cleanup that's required */
         test.TestReset();
 
@@ -178,7 +182,7 @@ public class BenchmarkController {
         }
         logger.info("Time: {}s", timeTaken / 1000);
         resultRecorder.recordResult(
-            bmConfig, testConfig, testMode, statusBefore, statusAfter, startTime, endTime);
+            bmConfig, testConfig, variant, statusBefore, statusAfter, startTime, endTime);
       }
 
     } catch (Exception e) {

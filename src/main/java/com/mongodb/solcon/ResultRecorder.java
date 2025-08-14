@@ -3,6 +3,7 @@ package com.mongodb.solcon;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.ReplaceOptions;
 import java.util.Date;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ public class ResultRecorder {
   private static final Logger logger = LoggerFactory.getLogger(ResultRecorder.class);
   final String databaseName = "unibench";
   final String collectionName = "results";
+  final String historyCollectionName = "results_history";
   MongoClient mongoClient;
   boolean enabled = false;
 
@@ -39,7 +41,7 @@ public class ResultRecorder {
   protected void recordResult(
       Document benchConfig,
       Document testConfig,
-      String mode,
+      Document variant,
       Document beforeStatus,
       Document afterStatus,
       Date startTime,
@@ -51,7 +53,8 @@ public class ResultRecorder {
     Document testRunInfo = new Document();
     testRunInfo.put("start_time", startTime);
     testRunInfo.put("end_time", endTime);
-    testRunInfo.put("mode", mode);
+    testRunInfo.put("duration", endTime.getTime() - startTime.getTime());
+    testRunInfo.put("variant", variant);
     testRunInfo.put("test_config", testConfig);
     testRunInfo.put("before_status", SanitiseStats(beforeStatus));
     testRunInfo.put("after_status", SanitiseStats(afterStatus));
@@ -59,7 +62,14 @@ public class ResultRecorder {
 
     MongoCollection<Document> collection =
         mongoClient.getDatabase(databaseName).getCollection(collectionName);
-    collection.insertOne(testRunInfo);
+    MongoCollection<Document> historyCollection =
+        mongoClient.getDatabase(databaseName).getCollection(collectionName);
+
+    Document id = Document.parse(variant.toJson()); // Deep copy
+    id.put("testname", testConfig.getString("filename"));
+    historyCollection.insertOne(testRunInfo);
+    ReplaceOptions options = new ReplaceOptions().upsert(true);
+    collection.replaceOne(new Document("_id", id), testRunInfo, options);
   }
 
   // $where breaks flex and free tier
