@@ -7,11 +7,13 @@
 ## About this document
 
 This document shows the expected performance of MongoDB when performing a given operation. Each table shows the impact
-on performance when changing parameters. For example adding an index. This is testing only Database performance, you
-shoudl assume that the client is using MongoDB optimally and that there are no network constraints between client and
+on performance when changing parameters. For example, adding an index. This is testing only Database performance, you
+should assume that the client is using MongoDB optimally and that there are no network constraints between client and
 server.
 
-Unless otherwise specified, this is MongoDB Atlas using an M30 instance with default IOPS on Amazon Web Services.
+Unless otherwise specified, this is MongoDB Atlas using an M30 ( 2 2 vCPU, 8GB RAM, 2GB configured as Cache) - 3 node
+replica set instance with default IOPS on Amazon
+Web Services. Writes are using write concern majority, reads are from the primary.
 
 The intent of this document is to assist in understanding the approximate expected performance of MongoDB either to
 verify that your own application running on MongoDB is performing as expected or to help you make decisions about how to
