@@ -3,6 +3,7 @@
   "numberOfThreads": 10,
   "database": "unibench",
   "collection": "inserts",
+  "warmup": true,
   "totalDocsToInsert": 100000,
   "variants": [
     {
