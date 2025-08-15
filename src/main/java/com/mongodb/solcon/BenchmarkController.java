@@ -33,9 +33,8 @@ public class BenchmarkController {
         System.exit(1);
       }
       mongoClient = MongoClients.create(mongoURI);
-      logger.info("Testing instance {}", mongoURI);
-      Document rval = mongoClient.getDatabase("admin").runCommand(new Document("ping", 1));
-      logger.info(rval.toJson());
+      Document rval = mongoClient.getDatabase("admin").runCommand(new Document("hello", 1));
+      logger.info("{}", rval.toJson());
     } catch (Exception e) {
       logger.error("An error occurred while connecting to MongoDB", e);
       System.exit(1);

@@ -31,6 +31,7 @@ public class InsertTest extends BaseMongoTest {
   String bigrandomString;
   int totalDocsToInsert;
   int writeBatchSize = 1000;
+  boolean showHello = true;
 
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
   /* We use this set of 3 fields repeated in our documents */
@@ -81,6 +82,10 @@ public class InsertTest extends BaseMongoTest {
       size = size + d.getByteBuffer().remaining();
       if (batch.size() >= writeBatchSize) {
         collection.insertMany(batch);
+        if (showHello && threadNo == 0) {
+          logger.info("{}", mongoClient.getClusterDescription().toString());
+          showHello = false;
+        }
         batch.clear();
       }
     }
