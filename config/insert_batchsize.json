@@ -3,7 +3,7 @@
   "numberOfThreads": 48,
   "database": "unibench",
   "collection": "inserts",
-  "totalDocsToInsert": 512000,
+  "totalDocsToInsert": 2097152,
   "dockSizeKB": 4.0,
   "variants": [
     {

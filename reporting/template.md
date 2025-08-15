@@ -57,6 +57,8 @@ key field.
 
 ## Impact of document size on insert speed
 
+### Description
+
 This shows how the document size impacts the speed in MB/s when using `insert`
 operations to add documents and assign them a primary key. In the test 2GB of
 data was bulk inserted into an empty collection. The only index is the _id index
@@ -73,13 +75,21 @@ logging use cases.
 <!-- MONGO_TABLE: {  
 "collection": "results",
     "pipeline": [
-    {"$match": {"test_config.filename" : "insert_docsize"}},
-    {"$set": { "durationMillis" : { "$subtract" : [ "$end_time", "$start_time" ]}}},
+    {"$match": {"_id.testname" : "insert_docsize"}},
     {"$set": { "totalKB" : { "$multiply" : [ "$variant.docSizeKB", "$variant.totalDocsToInsert"]}}},
-    {"$project": {"Kilobytes": "$variant.docSizeKB", "totalKB": 1, "durationMillis": 1, "_id": 0, "MBs": {"$divide": ["$totalKB", "$duration"]}}},
+    {"$project": {"Kilobytes": "$variant.docSizeKB", "totalKB": 1, "duration": 1, "_id": 0, "MBs": { "$round" : [ {"$divide": ["$totalKB", "$duration"]},2]}}},
     {"$sort":{ "Kilobytes": 1}}],
-    "headers": ["Kilobytes", "MBs", "durationMillis","totalKB"]
+    "headers": ["Kilobytes", "MBs", "duration","totalKB"]
 } -->  
+
+### Analysis
+
+With small document, there are considerably more index entries for the primary
+key which we can assume adds some overhead even when they are essentially
+sequential. The default volumens used for these tests are AWS GP3 which have
+3,000 IOPS and 125MIB/S write speed. As each inserted document neerds to be
+inserted in the Oplog, the Write-ahead-log and the collection, even allowing for
+compression this is likely limited by IOPS.
 
 ## Impact of client write batch size on write speed
 
@@ -101,6 +111,17 @@ increase concurrency but it is still far less efficient.
 In this test we insert 2GB of data ( 512,000 4KB documents ) using differening
 network write batch size to illustrate the impact of not correctly batching
 writes for ingestion.
+
+<!-- MONGO_TABLE: {  
+"collection": "results",
+    "pipeline": [
+    {"$match": {"test_config.filename" : "insert_batchsize"}},
+    {"$set": { "durationMillis" : { "$subtract" : [ "$end_time", "$start_time" ]}}},
+    {"$set": { "totalKB" : { "$multiply" : [ "$variant.docSizeKB", "$variant.totalDocsToInsert"]}}},
+    {"$project": {"Kilobytes": "$variant.docSizeKB", "totalKB": 1, "durationMillis": 1, "_id": 0, "MBs": {"$divide": ["$totalKB", "$duration"]}}},
+    {"$sort":{ "Kilobytes": 1}}],
+    "headers": ["Kilobytes", "MBs", "durationMillis","totalKB"]
+} -->  
 
 ## To Add
 

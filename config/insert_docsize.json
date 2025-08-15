@@ -7,23 +7,23 @@
   "variants": [
     {
       "docSizeKB": 1.0,
-      "totalDocsToInsert": 2097152
+      "totalDocsToInsert": 8388608
     },
     {
       "docSizeKB": 4.0,
-      "totalDocsToInsert": 524288
+      "totalDocsToInsert": 2097152
     },
     {
       "docSizeKB": 32.0,
-      "totalDocsToInsert": 65536
+      "totalDocsToInsert": 262144
     },
     {
       "docSizeKB": 256.0,
-      "totalDocsToInsert": 8192
+      "totalDocsToInsert": 32768
     },
     {
       "docSizeKB": 2048.0,
-      "totalDocsToInsert": 1024
+      "totalDocsToInsert": 4096
     }
   ],
   "warmup": false
