@@ -98,6 +98,8 @@ public class InsertTest extends BaseMongoTest {
       }
     }
     if (batch.size() >= 0) {
+      if (threadNo == 0) logger.info("Inserting final batch of {}", (batch.size()));
+
       collection.insertMany(batch);
       batch.clear();
     }
