@@ -74,6 +74,11 @@ logging use cases.
 
 | Kilobytes | MBs | duration | totalKB |
 | --- | --- | --- | --- |
+| 1 | 52.44 | 479915 | 25165824 |
+| 4 | 65.27 | 385568 | 25165824 |
+| 32 | 74.52 | 337718 | 25165824 |
+| 256 | 77.82 | 323384 | 25165824 |
+| 2048 | 916.12 | 27470 | 25165824 |
   
 
 ### Analysis
@@ -108,6 +113,8 @@ writes for ingestion.
 
 | Kilobytes | MBs | durationMillis | totalKB |
 | --- | --- | --- | --- |
+|  |  | 181363 |  |
+|  |  | 186484 |  |
   
 
 ## To Add
