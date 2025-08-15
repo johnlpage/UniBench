@@ -81,7 +81,9 @@ public class InsertTest extends BaseMongoTest {
       size = size + d.getByteBuffer().remaining();
       if (batch.size() >= writeBatchSize) {
         collection.insertMany(batch);
-
+        if (threadNo == 0) {
+          logger.info("{}% complete", Math.floor(doc / docsPerThread * 100));
+        }
         batch.clear();
       }
     }
