@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -18,16 +19,14 @@ import org.slf4j.LoggerFactory;
 public class AtlasClusterManager {
   private static final Logger logger = LoggerFactory.getLogger(AtlasClusterManager.class);
   private final String baseUrl = "https://cloud.mongodb.com/api/atlas/v1.0";
-  private final String publicKey;
-  private final String privateKey;
   private final String projectId;
   private final CloseableHttpClient httpClient;
 
   public AtlasClusterManager() {
-    this.publicKey = System.getenv("ATLAS_PUBLIC_KEY");
-    this.privateKey = System.getenv("ATLAS_PRIVATE_KEY");
+    String publicKey = System.getenv("ATLAS_PUBLIC_KEY");
+    String privateKey = System.getenv("ATLAS_PRIVATE_KEY");
     this.projectId = System.getenv("ATLAS_PROJECT_ID");
-    if (this.publicKey == null || this.privateKey == null || this.projectId == null) {
+    if (publicKey == null || privateKey == null || this.projectId == null) {
       logger.warn("AtlasClusterManager requires configuration");
       System.exit(1);
     }
@@ -56,13 +55,13 @@ public class AtlasClusterManager {
       "providerSettings": {
         "providerName": "AWS",
         "regionName": "EU_WEST_1",
-        "instanceSizeName": "%s",
-        "diskSizeGB": 60
+        "instanceSizeName": "%s"
       },
       "autoScaling": {
         "diskGBEnabled": false,
         "compute": { "enabled": false }
-      }
+      },
+       "diskSizeGB": 60
     }
     """,
               clusterName, tier);
@@ -77,6 +76,18 @@ public class AtlasClusterManager {
         throw new IOException("Failed to create cluster: " + response.getStatusLine());
       }
       logger.info("Cluster creation initiated for: " + clusterName);
+
+      try {
+        // Process the response entity
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+          String responseBody = EntityUtils.toString(entity); // Consume the entity
+          System.out.println(responseBody);
+        }
+      } finally {
+        // Close the response
+        EntityUtils.consume(response.getEntity()); // Ensures the connection can be reused
+      }
     }
 
     blockUntilClusterReady(clusterName, true);
