@@ -55,7 +55,8 @@ public class AtlasClusterManager {
       "providerSettings": {
         "providerName": "AWS",
         "regionName": "EU_WEST_1",
-        "instanceSizeName": "%s"
+        "instanceSizeName": "%s",
+        "diskSizeGB": 60
       },
       "autoScaling": {
         "diskGBEnabled": false,
