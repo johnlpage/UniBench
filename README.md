@@ -1,4 +1,4 @@
-#     
+#      
 
 ## Introduction
 
@@ -31,6 +31,10 @@ export ATLAS_PRIVATE_KEY=XXXXX
 java -jar bin/UniBench.jar benchmark.json
 ```
 
+# When finished take down the Atlas cluster
+
 ```shell
+
+
 java -jar bin/UniBench.jar teardown.json
 ```

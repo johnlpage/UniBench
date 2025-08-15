@@ -5,6 +5,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.ReplaceOptions;
 import java.util.Date;
+import java.util.TreeMap;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,11 +64,13 @@ public class ResultRecorder {
     MongoCollection<Document> collection =
         mongoClient.getDatabase(databaseName).getCollection(collectionName);
     MongoCollection<Document> historyCollection =
-        mongoClient.getDatabase(databaseName).getCollection(collectionName);
+        mongoClient.getDatabase(databaseName).getCollection(historyCollectionName);
 
     Document id = Document.parse(variant.toJson()); // Deep copy
     id.put("testname", testConfig.getString("filename"));
+    id = new Document(new TreeMap<>(id)); // Sort the fields
     historyCollection.insertOne(testRunInfo);
+    testRunInfo.remove("_id");
     ReplaceOptions options = new ReplaceOptions().upsert(true);
     collection.replaceOne(new Document("_id", id), testRunInfo, options);
   }
