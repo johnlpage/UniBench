@@ -3,7 +3,6 @@
   "numberOfThreads": 10,
   "database": "unibench",
   "collection": "inserts",
-  "warmup": true,
   "writeBatchSize": 10000,
   "variants": [
     {
