@@ -75,18 +75,22 @@ public class InsertTest extends BaseMongoTest {
     int docsPerThread = (int) (totalDocsToInsert / nThreads);
     List<RawBsonDocument> batch = new ArrayList<>();
     int size = 0;
-    int batchCount = 0;
+    int reportCount = 0;
     for (int doc = 0; doc < docsPerThread; doc++) {
       RawBsonDocument d = createDocument();
       batch.add(d);
+      reportCount++;
       size = size + d.getByteBuffer().remaining();
       if (batch.size() >= writeBatchSize) {
-        batchCount++;
+
         collection.insertMany(batch);
-        if (threadNo == 0 && batchCount % 100 == 0) {
+        if (threadNo == 0 && reportCount > docsPerThread / 20) {
           logger.info(
               "Thread 0: {} of {} = {}% complete",
-              doc, docsPerThread, Math.floor((doc * 100) / docsPerThread));
+              (doc + 1) * nThreads,
+              docsPerThread * nThreads,
+              Math.floor(((doc + 1) * 100) / docsPerThread));
+          reportCount = 0;
         }
         batch.clear();
       }
