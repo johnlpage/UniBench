@@ -88,12 +88,6 @@ public class InsertTest extends BaseMongoTest {
       collection.insertMany(batch);
       batch.clear();
     }
-    logger.info(
-        "Thread inserted "
-            + docsPerThread
-            + " documents approx size "
-            + (size / (1024 * 1024))
-            + "MB");
   }
 
   // Actually exactly not dropping data in the simple version
