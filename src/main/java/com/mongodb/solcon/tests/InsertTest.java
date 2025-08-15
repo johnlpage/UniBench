@@ -45,7 +45,9 @@ public class InsertTest extends BaseMongoTest {
     // Allow variation of batch size
 
     writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
-
+    if (variant != null && variant.getInteger("writeBatchSize") != null) {
+      writeBatchSize = variant.getInteger("writeBatchSize");
+    }
     // Approx Doc Size in bytes - get from top level unless in varaint
     if (testConfig.getDouble("docSizeKB") != null) {
       docsizeBytes = (int) (testConfig.getDouble("docSizeKB") * 1024);
@@ -86,7 +88,7 @@ public class InsertTest extends BaseMongoTest {
         collection.insertMany(batch);
         if (threadNo == 0 && reportCount > docsPerThread / 20) {
           logger.info(
-              "Thread 0: {} of {} = {}% complete",
+              "Inserted {} of {} = {}% complete",
               (doc + 1) * nThreads,
               docsPerThread * nThreads,
               Math.floor(((doc + 1) * 100) / docsPerThread));
