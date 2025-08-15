@@ -32,9 +32,11 @@ public class BenchmarkController {
         logger.error("MONGO_URI not defined");
         System.exit(1);
       }
+      logger.info("{}", mongoURI);
       mongoClient = MongoClients.create(mongoURI);
       Document rval = mongoClient.getDatabase("admin").runCommand(new Document("hello", 1));
       logger.info("{}", rval.toJson());
+      System.exit(1);
     } catch (Exception e) {
       logger.error("An error occurred while connecting to MongoDB", e);
       System.exit(1);
