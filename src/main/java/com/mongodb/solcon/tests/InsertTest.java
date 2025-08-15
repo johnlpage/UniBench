@@ -30,6 +30,7 @@ public class InsertTest extends BaseMongoTest {
   int docsizeBytes = 2048;
   String bigrandomString;
   int totalDocsToInsert;
+  int writeBatchSize = 1000;
 
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
   /* We use this set of 3 fields repeated in our documents */
@@ -41,8 +42,11 @@ public class InsertTest extends BaseMongoTest {
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
     Document variant = config.get("variant", Document.class);
 
-    // Approx Doc Size in bytes - get from top level unless in varaint
+    // Allow variation of batch size
 
+    writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
+
+    // Approx Doc Size in bytes - get from top level unless in varaint
     if (testConfig.getDouble("docSizeKB") != null) {
       docsizeBytes = (int) (testConfig.getDouble("docSizeKB") * 1024);
     }
@@ -68,8 +72,6 @@ public class InsertTest extends BaseMongoTest {
 
     // Try to have defaults
 
-    final int BATCHSIZE = 1000;
-
     int docsPerThread = (int) (totalDocsToInsert / nThreads);
     List<RawBsonDocument> batch = new ArrayList<>();
     int size = 0;
@@ -77,7 +79,7 @@ public class InsertTest extends BaseMongoTest {
       RawBsonDocument d = createDocument();
       batch.add(d);
       size = size + d.getByteBuffer().remaining();
-      if (batch.size() >= BATCHSIZE) {
+      if (batch.size() >= writeBatchSize) {
         collection.insertMany(batch);
         batch.clear();
       }

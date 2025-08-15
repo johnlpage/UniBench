@@ -44,7 +44,7 @@ public class BenchmarkController {
   public void runBenchmark(String configFile) {
     bmConfig = readConfigFile(configFile);
 
-    /* Ensire we have a cluster to test with */
+    /* Ensure we have a cluster to test with */
     String atlasInstanceType = bmConfig.getString("atlasInstanceType");
     final String testClusterName = "UniBenchTemp";
 
@@ -83,6 +83,7 @@ public class BenchmarkController {
     return configFile;
   }
 
+  @SuppressWarnings("unchecked")
   void runTest(String testConfigFile) {
     Document testConfig = readConfigFile(testConfigFile);
     testConfig.append(
@@ -96,9 +97,9 @@ public class BenchmarkController {
           (BaseMongoTest)
               testClass.getDeclaredConstructors()[0].newInstance(mongoClient, testConfig, 0, 0);
 
-      // If data needs generated (or verified) do it in the test class here
+      // If data needs generated (or verified), do it in the test class here
       test.GenerateData();
-      // If the data exists wut we want to do any warm-up of caches then do it here
+      // If the data exists wut we want to do any warm-up of caches, then do it here
       test.WarmCache();
 
       int numberOfThreads = testConfig.getInteger("numberOfThreads", 20);
@@ -107,8 +108,8 @@ public class BenchmarkController {
         testConfig.put(
             "variant",
             variant); // Set the mode parameter to whatever mode we want - this cna be used to
-        // set groups of parameters - like running againast an empty or prepopulated collection
-        logger.info("Running variant " + variant.toJson());
+        // set groups of parameters - like running against an empty or prepopulated collection
+        logger.info("Running variant {}", variant.toJson());
         /* Use this for any pre-run cleanup that's required */
         test.TestReset();
 
@@ -140,46 +141,7 @@ public class BenchmarkController {
 
         statusAfter = mongoClient.getDatabase("admin").runCommand(new Document("serverStatus", 1));
         logger.info("Test Complete");
-        long cacheReadBytesBefore;
-        long cacheReadBytesAfter;
 
-        if (statusBefore.getString("process").equals("mongod")) {
-          // this code only works for replica sets not sharded clusters
-          try {
-            // Work round the fact this type changes!
-            cacheReadBytesBefore =
-                (long)
-                    statusBefore
-                        .get("wiredTiger", new Document())
-                        .get("cache", new Document())
-                        .getInteger("bytes read into cache");
-          } catch (Exception e) {
-            cacheReadBytesBefore =
-                statusBefore
-                    .get("wiredTiger", new Document())
-                    .get("cache", new Document())
-                    .getLong("bytes read into cache");
-          }
-
-          try {
-            cacheReadBytesAfter =
-                (long)
-                    statusAfter
-                        .get("wiredTiger", new Document())
-                        .get("cache", new Document())
-                        .getInteger("bytes read into cache");
-          } catch (Exception e) {
-            cacheReadBytesAfter =
-                statusAfter
-                    .get("wiredTiger", new Document())
-                    .get("cache", new Document())
-                    .getLong("bytes read into cache");
-          }
-
-          logger.info(
-              "MB Read Into Cache during test: {}",
-              (cacheReadBytesAfter - cacheReadBytesBefore) / (1024 * 1024));
-        }
         logger.info("Time: {}s", timeTaken / 1000);
         resultRecorder.recordResult(
             bmConfig, testConfig, variant, statusBefore, statusAfter, startTime, endTime);
@@ -187,6 +149,7 @@ public class BenchmarkController {
 
     } catch (Exception e) {
       logger.error("An error occurred: {}", e.getMessage());
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
   }
@@ -211,6 +174,7 @@ public class BenchmarkController {
       executorService.submit(t);
     }
     executorService.shutdown();
+    //noinspection ResultOfMethodCallIgnored
     executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
   }
 }

@@ -97,11 +97,15 @@ public class AtlasClusterManager {
     if (body.contains("\"stateName\":\"IDLE\"")) {
       return 200;
     } // It's up
-    return 201; // It's been creted already :0)
+    return 201; // It's been created already: 0)
   }
 
   public void blockUntilClusterReady(String clusterName, boolean state) throws Exception {
-    logger.info("Polling cluster status for: " + clusterName);
+    logger.info(
+        "Polling cluster status for: "
+            + clusterName
+            + "BUG TOFIX: If this is the last line output and nothing is "
+            + "following run again");
     int tries = 0;
     while (tries < 100) {
       tries++;
