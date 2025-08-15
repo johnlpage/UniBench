@@ -57,6 +57,8 @@ key field.
 
 ## Impact of document size on insert speed
 
+### Description
+
 This shows how the document size impacts the speed in MB/s when using `insert`
 operations to add documents and assign them a primary key. In the test 2GB of
 data was bulk inserted into an empty collection. The only index is the _id index
@@ -72,12 +74,16 @@ logging use cases.
 
 | Kilobytes | MBs | duration | totalKB |
 | --- | --- | --- | --- |
-| 1 | 32.72 | 64093 | 2097152 |
-| 4 | 51.84 | 40456 | 2097152 |
-| 32 | 54.3 | 38624 | 2097152 |
-| 256 | 53.19 | 39431 | 2097152 |
-| 2048 | 54.4 | 38554 | 2097152 |
   
+
+### Analysis
+
+With small document, there are considerably more index entries for the primary
+key which we can assume adds some overhead even when they are essentially
+sequential. The default volumens used for these tests are AWS GP3 which have
+3,000 IOPS and 125MIB/S write speed. As each inserted document neerds to be
+inserted in the Oplog, the Write-ahead-log and the collection, even allowing for
+compression this is likely limited by IOPS.
 
 ## Impact of client write batch size on write speed
 
@@ -102,11 +108,6 @@ writes for ingestion.
 
 | Kilobytes | MBs | durationMillis | totalKB |
 | --- | --- | --- | --- |
-|  |  | 49091 |  |
-|  |  | 29051 |  |
-|  |  | 33002 |  |
-|  |  | 29036 |  |
-|  |  | 29065 |  |
   
 
 ## To Add
