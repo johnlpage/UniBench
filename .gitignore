@@ -8,3 +8,5 @@ target/*
 
 reporting/node_modules/
 reporting/package-lock.json
+#reporting/report.md
+

@@ -25,10 +25,8 @@ something of significance.
 
 This shows how the document size impacts the insert speed in MB/s
 
-
 | Kilobytes | MBs | durationMillis | totalKB |
-| --- | --- | --- | --- |
-  
+|-----------|-----|----------------|---------|
 
 ## Sales Trend
 
