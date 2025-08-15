@@ -3,7 +3,7 @@
   "numberOfThreads": 10,
   "database": "unibench",
   "collection": "inserts",
-  "writeBatchSize": 10000,
+  "writeBatchSize": 1000,
   "variants": [
     {
       "docSizeKB": 1.0,
