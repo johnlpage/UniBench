@@ -1,7 +1,8 @@
 {
   "comment": "This is the top level config file",
   "tests": [
-    "config/insert_docsize.json"
+    "config/insert_docsize.json",
+    "config/insert_batchsize.json"
   ],
   "atlasInstanceType": "M30"
 }
