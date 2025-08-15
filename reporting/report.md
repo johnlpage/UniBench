@@ -60,7 +60,7 @@ key field.
 ### Description
 
 This shows how the document size impacts the speed in MB/s when using `insert`
-operations to add documents and assign them a primary key. In the test 2GB of
+operations to add documents and assign them a primary key. In the test 24 GB of
 data was bulk inserted into an empty collection. The only index is the _id index
 with the default ObjectID(), in this was only a small set of database blocks
 are being written to at any one time, so nearly all writes to the database are
