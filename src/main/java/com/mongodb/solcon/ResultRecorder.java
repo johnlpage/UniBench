@@ -38,6 +38,10 @@ public class ResultRecorder {
     }
   }
 
+  private static Document safeGet(Document doc, String key) {
+    return doc != null ? (Document) doc.get(key) : null;
+  }
+
   // Very Generic
   protected void recordResult(
       Document benchConfig,
@@ -77,17 +81,23 @@ public class ResultRecorder {
 
   // $where breaks flex and free tier
   Document SanitiseStats(Document stats) {
-    ((Document) ((Document) ((Document) stats.get("metrics")).get("operatorCounters")).get("match"))
-        .remove("$where");
-    ((Document)
-            ((Document) ((Document) stats.get("metrics")).get("operatorCounters"))
-                .get("expressions"))
-        .remove("$function");
+    // Usage Example
+    Document metrics = safeGet(stats, "metrics");
+    Document operatorCounters = safeGet(metrics, "operatorCounters");
+    Document match = safeGet(operatorCounters, "match");
+    if (match != null) {
+      match.remove("$where");
+    }
 
-    ((Document)
-            ((Document) ((Document) stats.get("metrics")).get("operatorCounters"))
-                .get("groupAccumulators"))
-        .remove("$accumulator");
+    Document expressions = safeGet(operatorCounters, "expressions");
+    if (expressions != null) {
+      expressions.remove("$function");
+    }
+
+    Document groupAccumulators = safeGet(operatorCounters, "groupAccumulators");
+    if (groupAccumulators != null) {
+      groupAccumulators.remove("$accumulator");
+    }
     return stats;
   }
 }
