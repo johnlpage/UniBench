@@ -86,7 +86,7 @@ public class InsertTest extends BaseMongoTest {
         if (threadNo == 0 && batchCount % 100 == 0) {
           logger.info(
               "Thread 0: {} of {} = {}% complete",
-              doc, docsPerThread, Math.floor(doc / docsPerThread * 100));
+              doc, docsPerThread, Math.floor((doc * 100) / docsPerThread));
         }
         batch.clear();
       }
