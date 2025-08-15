@@ -4,6 +4,7 @@
   "database": "unibench",
   "collection": "inserts",
   "warmup": true,
+  "writeBatchSize": 4000,
   "totalDocsToInsert": 100000,
   "variants": [
     {

@@ -17,6 +17,9 @@
     },
     {
       "writeBatchSize": 1000
+    },
+    {
+      "writeBatchSize": 4000
     }
   ],
   "warmup": false
