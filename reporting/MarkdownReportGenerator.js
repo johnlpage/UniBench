@@ -3,7 +3,10 @@ import {promises as fs} from 'fs';
 import {ChartJSNodeCanvas} from 'chartjs-node-canvas';
 
 class MarkdownReportGenerator {
+
+
     constructor(mongoUrl, dbName) {
+        this.debugMode = true;
         this.client = new MongoClient(mongoUrl);
         this.dbName = dbName;
         this.chartRenderer = new ChartJSNodeCanvas({width: 800, height: 400});
@@ -15,7 +18,8 @@ class MarkdownReportGenerator {
         // Read template  
         let markdown = await fs.readFile(templatePath, 'utf8');
 
-        // Replace data placeholders  
+        // Replace
+        // data placeholders
         markdown = await this.replaceTablePlaceholders(markdown);
         markdown = await this.replaceChartPlaceholders(markdown);
 
@@ -27,14 +31,15 @@ class MarkdownReportGenerator {
     async replaceTablePlaceholders(markdown) {
         const tableRegex = /<!--\s*MONGO_TABLE:\s*(.+?)\s*-->/gs;
         let match;
+        let updatedMarkdown = markdown; // Create a separate copy
 
         while ((match = tableRegex.exec(markdown)) !== null) {
             const query = JSON.parse(match[1]);
             const table = await this.generateTable(query);
-            markdown = markdown.replace(match[0], table);
+            updatedMarkdown = updatedMarkdown.replace(match[0], table); // Work on updatedMarkdown
         }
 
-        return markdown;
+        return updatedMarkdown; // Return the updated string
     }
 
     async replaceChartPlaceholders(markdown) {
@@ -50,20 +55,23 @@ class MarkdownReportGenerator {
         return markdown;
     }
 
-    async generateTable({collection, pipeline, headers}) {
+    async generateTable({collection, pipeline, headers, columns}) {
         const db = this.client.db(this.dbName);
         const results = await db.collection(collection).aggregate(pipeline).toArray();
 
         // Generate markdown table  
         let table = `| ${headers.join(' | ')} |\n`;
-        table += `| ${headers.map(() => '---').join(' | ')} |\n`;
+        table += `| ${headers.map(() => '--:').join(' | ')} |\n`;
 
         results.forEach(row => {
-            const values = headers.map(header => row[header] || '');
+            const values = columns.map(column => row[column] || '');
             table += `| ${values.join(' | ')} |\n`;
         });
 
-        return table;
+        if (this.debugMode) {
+            table += "\n```\n" + JSON.stringify(results, null, 2) + "\n```\n"
+        }
+        return table
     }
 
     async generateChart({collection, pipeline, chartType, title}) {

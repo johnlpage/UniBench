@@ -4,7 +4,8 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 public class BenchmarkController {
   private static final Logger logger = LoggerFactory.getLogger(BenchmarkController.class);
+  final String testClusterName = "UniBenchTemp";
   ResultRecorder resultRecorder;
   MongoClient mongoClient;
   Document bmConfig;
@@ -48,28 +50,45 @@ public class BenchmarkController {
 
     /* Ensure we have a cluster to test with */
     String atlasInstanceType = bmConfig.getString("atlasInstanceType");
-    final String testClusterName = "UniBenchTemp";
 
     if (atlasInstanceType != null) {
       try {
-        if (atlasInstanceType.equals("none")) {
-          atlasClusterManager.deleteCluster(testClusterName);
-          System.out.println("Deleted Cluster " + testClusterName);
-          System.exit(0);
-        } else {
-          atlasClusterManager.createCluster(testClusterName, atlasInstanceType);
-        }
+
+        atlasClusterManager.createCluster(testClusterName, atlasInstanceType);
 
       } catch (Exception e) {
         logger.error("An error occurred while starting a cluster to MongoDB", e);
         System.exit(1);
       }
     }
+    // Test we have working metrics - might need access
+    Instant startTime = Instant.now().minus(Duration.ofMinutes(10));
+    Instant endTime = Instant.now();
+    try {
+      Document metrics =
+          atlasClusterManager.getClusterPrimaryMetrics(
+              testClusterName, startTime.toString(), endTime.toString());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
 
     /* Read in the top level config and execute all tests */
     connectToMongoDB();
-    for (String testConfigFile : bmConfig.getList("tests", String.class)) {
-      runTest(testConfigFile);
+    if (bmConfig.getList("tests", String.class) != null) {
+      for (String testConfigFile : bmConfig.getList("tests", String.class)) {
+        runTest(testConfigFile);
+      }
+    }
+    // Tear down at end of tests if specified - often this will be in own file
+    if (bmConfig.getBoolean("teardownAtlas", false)) {
+      try {
+        atlasClusterManager.deleteCluster(testClusterName);
+        System.out.println("Deleted Cluster " + testClusterName);
+        System.exit(0);
+      } catch (Exception e) {
+        logger.error("An error occurred while deleting a cluster from Atlas", e);
+        System.exit(1);
+      }
     }
   }
 
@@ -136,17 +155,21 @@ public class BenchmarkController {
         executorService = Executors.newFixedThreadPool(numberOfThreads);
 
         logger.info("Test Live Run {} threads", numberOfThreads);
-        Date startTime = new Date();
+        Instant startTime = Instant.now();
         runTestsInParallel(testConfig, mongoClient, testClass, numberOfThreads, executorService);
-        Date endTime = new Date();
-        long timeTaken = endTime.getTime() - startTime.getTime();
+        Instant endTime = Instant.now();
+        long timeTaken = Duration.between(startTime, endTime).toMillis();
+
+        Document metrics =
+            atlasClusterManager.getClusterPrimaryMetrics(
+                testClusterName, startTime.toString(), endTime.toString());
 
         statusAfter = mongoClient.getDatabase("admin").runCommand(new Document("serverStatus", 1));
         logger.info("Test Complete");
 
         logger.info("Time: {}s", timeTaken / 1000);
         resultRecorder.recordResult(
-            bmConfig, testConfig, variant, statusBefore, statusAfter, startTime, endTime);
+            bmConfig, testConfig, variant, statusBefore, statusAfter, metrics, startTime, endTime);
       }
 
     } catch (Exception e) {

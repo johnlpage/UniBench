@@ -70,17 +70,71 @@ Data like this is very quick to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
 logging use cases.
 
+### Performance
 
-
-<!-- MONGO_TABLE: {  
-"collection": "results",
-    "pipeline": [
-    {"$match": {"_id.testname" : "insert_docsize"}},
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize_small"}},
     {"$set": { "totalKB" : { "$multiply" : [ "$variant.docSizeKB", "$variant.totalDocsToInsert"]}}},
-    {"$project": {"Kilobytes": "$variant.docSizeKB", "totalKB": 1, "duration": 1, "_id": 0, "MBs": { "$round" : [ {"$divide": ["$totalKB", "$duration"]},2]}}},
-    {"$sort":{ "Kilobytes": 1}}],
-    "headers": ["Kilobytes", "MBs", "duration","totalKB"]
-} -->  
+    {"$project": {
+                  "docSizeKB": "$variant.docSizeKB",
+                  "totalMB": {"$round":{ "$divide":  [ "$totalKB",1024]} },
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0,
+                  "MBperSecond": { "$round" : [ {"$divide": ["$totalKB", "$duration"]},2]},
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.totalDocsToInsert"]}, "$duration"]}]}
+    }},
+    {"$sort":{ "docSizeKB": 1}}],
+    "columns": ["docSizeKB", "durationS","totalMB","DocsPerSecond","MBperSecond"],
+    "headers": ["Document Size (KB)", "Time Taken (s) ","Data Loaded (MB)", "Speed (docs/s)", "Speed (MB/s)"]
+}
+-->  
+
+### Resource Usage
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize_small" }},
+    { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
+    { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
+    { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
+    { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
+    { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
+    { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
+
+    { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+
+    { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
+                                                                            "$before_status.wiredTiger.block-manager.bytes written"]}}},
+
+    { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
+
+    { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
+ {   "$set" : { "meanIops" : {"$round": { "$avg" : "$totalIops.dataPoints.value"}}}},
+    { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
+    { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+    { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
+
+    {"$project": {
+                 "userCPU":1,"meanIops":1,
+                "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
+                "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
+        }
+    },
+    { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
+ { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+{"$sort":{ "docSizeKB": 1}}],
+
+    "columns": ["docSizeKB","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","estimatedIOPS","meanIops" ],
+    "headers": ["Document Size (KB)","CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "Predicted IOPS","Actual mean IOPS"]
+}
+-->  
 
 ### Analysis
 
@@ -111,17 +165,6 @@ increase concurrency but it is still far less efficient.
 In this test we insert 2GB of data ( 512,000 4KB documents ) using differening
 network write batch size to illustrate the impact of not correctly batching
 writes for ingestion.
-
-<!-- MONGO_TABLE: {  
-"collection": "results",
-    "pipeline": [
-    {"$match": {"test_config.filename" : "insert_batchsize"}},
-    {"$set": { "durationMillis" : { "$subtract" : [ "$end_time", "$start_time" ]}}},
-    {"$set": { "totalKB" : { "$multiply" : [ "$variant.docSizeKB", "$variant.totalDocsToInsert"]}}},
-    {"$project": {"Kilobytes": "$variant.docSizeKB", "totalKB": 1, "durationMillis": 1, "_id": 0, "MBs": {"$divide": ["$totalKB", "$duration"]}}},
-    {"$sort":{ "Kilobytes": 1}}],
-    "headers": ["Kilobytes", "MBs", "durationMillis","totalKB"]
-} -->  
 
 ## To Add
 

@@ -4,7 +4,9 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.ReplaceOptions;
-import java.util.Date;
+import java.sql.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.TreeMap;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -49,20 +51,22 @@ public class ResultRecorder {
       Document variant,
       Document beforeStatus,
       Document afterStatus,
-      Date startTime,
-      Date endTime) {
+      Document metrics,
+      Instant startTime,
+      Instant endTime) {
 
     if (!enabled) {
       return;
     }
     Document testRunInfo = new Document();
-    testRunInfo.put("start_time", startTime);
-    testRunInfo.put("end_time", endTime);
-    testRunInfo.put("duration", endTime.getTime() - startTime.getTime());
+    testRunInfo.put("start_time", Date.from(startTime));
+    testRunInfo.put("end_time", Date.from(endTime));
+    testRunInfo.put("duration", Duration.between(startTime, endTime).toMillis());
     testRunInfo.put("variant", variant);
     testRunInfo.put("test_config", testConfig);
     testRunInfo.put("before_status", SanitiseStats(beforeStatus));
     testRunInfo.put("after_status", SanitiseStats(afterStatus));
+    testRunInfo.put("metrics", metrics);
     testRunInfo.put("bench_config", benchConfig);
 
     MongoCollection<Document> collection =

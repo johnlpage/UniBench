@@ -70,15 +70,112 @@ Data like this is very quick to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
 logging use cases.
 
+### Performance
 
+| Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
+| --: | --: | --: | --: | --: |
+| 1 | 774 | 24576 | 32503 | 32.5 |
 
-| Kilobytes | MBs | duration | totalKB |
-| --- | --- | --- | --- |
-| 1 | 52.44 | 479915 | 25165824 |
-| 4 | 65.27 | 385568 | 25165824 |
-| 32 | 74.52 | 337718 | 25165824 |
-| 256 | 77.82 | 323384 | 25165824 |
-| 2048 | 916.12 | 27470 | 25165824 |
+```
+[
+  {
+    "docSizeKB": 1,
+    "totalMB": 24576,
+    "durationS": 774,
+    "MBperSecond": 32.5,
+    "DocsPerSecond": 32503
+  }
+]
+```
+  
+
+### Resource Usage
+
+| Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | Predicted IOPS | Actual mean IOPS |
+| --: | --: | --: | --: | --: | --: | --: | --: |
+| 1 | 46 | 7 | 12 | 42191 | 20066 | 255 | 276 |
+
+```
+[
+  {
+    "_id": {
+      "docSizeKB": 1,
+      "testname": "insert_docsize_small",
+      "totalDocsToInsert": 25165824,
+      "writeBatchSize": 4000
+    },
+    "userCPU": {
+      "dataPoints": [
+        {
+          "timestamp": "2025-08-19T10:56:07Z",
+          "value": null
+        },
+        {
+          "timestamp": "2025-08-19T10:57:06Z",
+          "value": 43.57141647329822
+        },
+        {
+          "timestamp": "2025-08-19T10:58:06Z",
+          "value": 44.752752285937945
+        },
+        {
+          "timestamp": "2025-08-19T10:59:06Z",
+          "value": 43.675175250178995
+        },
+        {
+          "timestamp": "2025-08-19T11:00:06Z",
+          "value": 50.18903119431075
+        },
+        {
+          "timestamp": "2025-08-19T11:01:06Z",
+          "value": 43.24360341151387
+        },
+        {
+          "timestamp": "2025-08-19T11:02:06Z",
+          "value": 41.291891531747616
+        },
+        {
+          "timestamp": "2025-08-19T11:03:06Z",
+          "value": 41.85752119526292
+        },
+        {
+          "timestamp": "2025-08-19T11:04:06Z",
+          "value": 41.38568360057945
+        },
+        {
+          "timestamp": "2025-08-19T11:05:06Z",
+          "value": 42.34408315565032
+        },
+        {
+          "timestamp": "2025-08-19T11:06:06Z",
+          "value": 43.622372497418304
+        },
+        {
+          "timestamp": "2025-08-19T11:07:07Z",
+          "value": 42.88736030379241
+        },
+        {
+          "timestamp": "2025-08-19T11:08:07Z",
+          "value": 42.73127019554282
+        }
+      ],
+      "name": "SYSTEM_NORMALIZED_CPU_USER",
+      "units": "PERCENT"
+    },
+    "cacheWriteOut": 32667398144,
+    "journalWrite": 15536429989,
+    "meanIops": 276,
+    "cachePageReadPerSecondKB": 12,
+    "compressedDataPerSecondKB": 42191,
+    "journalPerSecondKB": 20066,
+    "docSizeKB": 1,
+    "cacheReadInMB": 0,
+    "meancpu": 46,
+    "iowait": 7,
+    "estimatedIOPS": 255
+  }
+]
+```
   
 
 ### Analysis
@@ -110,12 +207,6 @@ increase concurrency but it is still far less efficient.
 In this test we insert 2GB of data ( 512,000 4KB documents ) using differening
 network write batch size to illustrate the impact of not correctly batching
 writes for ingestion.
-
-| Kilobytes | MBs | durationMillis | totalKB |
-| --- | --- | --- | --- |
-|  |  | 181363 |  |
-|  |  | 186484 |  |
-  
 
 ## To Add
 

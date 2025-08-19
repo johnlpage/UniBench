@@ -13,6 +13,7 @@ import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.*;
 import org.apache.http.util.EntityUtils;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +56,7 @@ public class AtlasClusterManager {
       "providerSettings": {
         "providerName": "AWS",
         "regionName": "EU_WEST_1",
-        "instanceSizeName": "%s",
-        "diskSizeGB": 60
+        "instanceSizeName": "%s"
       },
       "autoScaling": {
         "diskGBEnabled": false,
@@ -74,6 +74,12 @@ public class AtlasClusterManager {
       HttpResponse response = httpClient.execute(request);
       int statusCode = response.getStatusLine().getStatusCode();
       if (statusCode >= 300) {
+        logger.error("Failed to create cluster: " + response.getStatusLine());
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+          String responseBody = EntityUtils.toString(entity); // Consume the entity
+          System.out.println(responseBody);
+        }
         throw new IOException("Failed to create cluster: " + response.getStatusLine());
       }
       logger.info("Cluster creation initiated for: " + clusterName);
@@ -114,11 +120,7 @@ public class AtlasClusterManager {
   }
 
   public void blockUntilClusterReady(String clusterName, boolean state) throws Exception {
-    logger.info(
-        "Polling cluster status for: "
-            + clusterName
-            + "BUG TOFIX: If this is the last line output and nothing is "
-            + "following run again");
+
     int tries = 0;
     while (tries < 100) {
       tries++;
@@ -153,21 +155,89 @@ public class AtlasClusterManager {
     blockUntilClusterReady(clusterName, false);
   }
 
-  // TODO - Use this as required, fr example to verify is cluster is correct instance type
-  String getClusterDetails(String clusterName) throws Exception {
-    String url = baseUrl + "/groups/" + projectId + "/clusters/" + clusterName;
-    HttpGet request = new HttpGet(url);
-    HttpResponse response = httpClient.execute(request);
-    int statusCode = response.getStatusLine().getStatusCode();
+  public Document getClusterPrimaryMetrics(String clusterName, String startTime, String endTime)
+      throws Exception {
+    // Step 1: Get all processes for the project
+    String processesUrl = String.format("%s/groups/%s/processes", baseUrl, projectId);
 
-    if (statusCode == 200) {
-      String body = EntityUtils.toString(response.getEntity());
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode json = mapper.readTree(body);
-      String connectionString = json.get("mongoURIWithSRV").asText(); // or "mongoURI"
-      return connectionString;
-    } else {
-      throw new RuntimeException("Could not get cluster info: " + response.getStatusLine());
+    HttpGet processesRequest = new HttpGet(processesUrl);
+    processesRequest.setHeader("Content-Type", "application/json");
+
+    HttpResponse processesResponse = httpClient.execute(processesRequest);
+    int processesStatusCode = processesResponse.getStatusLine().getStatusCode();
+
+    if (processesStatusCode != 200) {
+      String processesResponseBody = EntityUtils.toString(processesResponse.getEntity());
+      logger.error(processesResponseBody);
+      throw new IOException("Failed to retrieve processes: " + processesResponse.getStatusLine());
     }
+
+    String processesResponseBody = EntityUtils.toString(processesResponse.getEntity());
+    ObjectMapper processesMapper = new ObjectMapper();
+    JsonNode processesNode = processesMapper.readTree(processesResponseBody);
+
+    // Locate the process ID for the primary node in the specified cluster
+    String primaryProcessId = null;
+    for (JsonNode processNode : processesNode.path("results")) {
+      if (processNode.path("typeName").asText().equals("REPLICA_PRIMARY")
+          && processNode.path("userAlias").asText().startsWith(clusterName.toLowerCase())) {
+        primaryProcessId = processNode.path("id").asText();
+        break;
+      }
+    }
+
+    if (primaryProcessId == null) {
+      throw new IllegalStateException("Primary process ID not found for cluster: " + clusterName);
+    }
+
+    // Step 2: Retrieve measurements for the primary process ID
+    String measurementsUrl =
+        String.format(
+            "%s/groups/%s/processes/%s/measurements", baseUrl, projectId, primaryProcessId);
+    String queryParams = String.format("?granularity=PT1M&start=%s&end=%s", startTime, endTime);
+
+    HttpGet measurementsRequest = new HttpGet(measurementsUrl + queryParams);
+    measurementsRequest.setHeader("Content-Type", "application/json");
+
+    HttpResponse measurementsResponse = httpClient.execute(measurementsRequest);
+    int measurementsStatusCode = measurementsResponse.getStatusLine().getStatusCode();
+
+    if (measurementsStatusCode != 200) {
+      String measurementsResponseBody = EntityUtils.toString(measurementsResponse.getEntity());
+      logger.error(measurementsResponseBody);
+      throw new IOException(
+          "Failed to retrieve measurements: " + measurementsResponse.getStatusLine());
+    }
+
+    String measurementsResponseBody = EntityUtils.toString(measurementsResponse.getEntity());
+    logger.info(measurementsResponseBody);
+
+    /* I'm not convinced measuring the IOPS used it the most useful thing in general, we want to
+    know How much we write out (which in general is sequential) How much we read into cache (how many blocks) as that's generally random
+     When we write from cache we write Collection and Oplog, we also need to account for journal   writes] This i may be in staus */
+
+    // Get Disk Information
+    String dataDiskMeasurements =
+        String.format(
+            "%s/groups/%s/processes/%s/disks/data/measurements",
+            baseUrl, projectId, primaryProcessId);
+
+    HttpGet disksRequest = new HttpGet(dataDiskMeasurements + queryParams);
+    disksRequest.setHeader("Content-Type", "application/json");
+
+    HttpResponse disksResponse = httpClient.execute(disksRequest);
+    int disksStatusCode = disksResponse.getStatusLine().getStatusCode();
+    String disksResponseBody = EntityUtils.toString(disksResponse.getEntity());
+    if (disksStatusCode != 200) {
+
+      logger.error(disksResponseBody);
+      throw new IOException("Failed to retrieve list of disks: " + disksResponse.getStatusLine());
+    }
+
+    Document diskMetrics = Document.parse(disksResponseBody);
+
+    Document rval = Document.parse(measurementsResponseBody);
+    rval.put("diskMetrics", diskMetrics.get("measurements"));
+    return rval;
   }
 }

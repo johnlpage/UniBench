@@ -1,0 +1,75 @@
+{
+  "collection": "results",
+  "pipeline": [
+    {
+      "$match": {
+        "_id.testname": "insert_docsize"
+      }
+    },
+    {
+      "$set": {
+        "totalKB": {
+          "$multiply": [
+            "$variant.docSizeKB",
+            "$variant.totalDocsToInsert"
+          ]
+        }
+      }
+    },
+    {
+      "$project": {
+        "docSizeKB": "$variant.docSizeKB",
+        "totalMB": {
+          "$round": {
+            "$divide": [
+              "$totalKB",
+              1024
+            ]
+          }
+        },
+        "duration": 1,
+        "_id": 0,
+        "MBperSecond": {
+          "$round": [
+            {
+              "$divide": [
+                "$totalKB",
+                "$duration"
+              ]
+            },
+            2
+          ]
+        },
+        "DocsPerSecond": {
+          "$round": [
+            {
+              "$divide": [
+                "$variant.totalDocsToInsert",
+                "$duration"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "$sort": {
+        "Kilobytes": 1
+      }
+    }
+  ],
+  "columns": [
+    "docSizeKB",
+    "duration",
+    "totalMB",
+    "DocsPerSecond",
+    "MBperSecond"
+  ],
+  "headers": [
+    "Document Size (KB)",
+    "Time Taken(s) ",
+    "Data Loaded (MB)",
+    "Speed (Docs/s)",
+    "Speed (MB/s)"
+  ]
+}
