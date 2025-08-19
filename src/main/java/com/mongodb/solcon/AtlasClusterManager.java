@@ -210,7 +210,6 @@ public class AtlasClusterManager {
     }
 
     String measurementsResponseBody = EntityUtils.toString(measurementsResponse.getEntity());
-    logger.info(measurementsResponseBody);
 
     /* I'm not convinced measuring the IOPS used it the most useful thing in general, we want to
     know How much we write out (which in general is sequential) How much we read into cache (how many blocks) as that's generally random

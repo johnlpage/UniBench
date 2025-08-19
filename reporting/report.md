@@ -74,108 +74,22 @@ logging use cases.
 
 | Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
 | --: | --: | --: | --: | --: |
-| 1 | 774 | 24576 | 32503 | 32.5 |
-
-```
-[
-  {
-    "docSizeKB": 1,
-    "totalMB": 24576,
-    "durationS": 774,
-    "MBperSecond": 32.5,
-    "DocsPerSecond": 32503
-  }
-]
-```
+| 1 | 448 | 24576 | 56115 | 56.12 |
+| 4 | 374 | 24576 | 16808 | 67.23 |
+| 32 | 363 | 24576 | 2169 | 69.4 |
+| 256 | 333 | 24576 | 295 | 75.52 |
+| 2048 | 321 | 24576 | 38 | 78.49 |
   
 
 ### Resource Usage
 
 | Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | Predicted IOPS | Actual mean IOPS |
 | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 46 | 7 | 12 | 42191 | 20066 | 255 | 276 |
-
-```
-[
-  {
-    "_id": {
-      "docSizeKB": 1,
-      "testname": "insert_docsize_small",
-      "totalDocsToInsert": 25165824,
-      "writeBatchSize": 4000
-    },
-    "userCPU": {
-      "dataPoints": [
-        {
-          "timestamp": "2025-08-19T10:56:07Z",
-          "value": null
-        },
-        {
-          "timestamp": "2025-08-19T10:57:06Z",
-          "value": 43.57141647329822
-        },
-        {
-          "timestamp": "2025-08-19T10:58:06Z",
-          "value": 44.752752285937945
-        },
-        {
-          "timestamp": "2025-08-19T10:59:06Z",
-          "value": 43.675175250178995
-        },
-        {
-          "timestamp": "2025-08-19T11:00:06Z",
-          "value": 50.18903119431075
-        },
-        {
-          "timestamp": "2025-08-19T11:01:06Z",
-          "value": 43.24360341151387
-        },
-        {
-          "timestamp": "2025-08-19T11:02:06Z",
-          "value": 41.291891531747616
-        },
-        {
-          "timestamp": "2025-08-19T11:03:06Z",
-          "value": 41.85752119526292
-        },
-        {
-          "timestamp": "2025-08-19T11:04:06Z",
-          "value": 41.38568360057945
-        },
-        {
-          "timestamp": "2025-08-19T11:05:06Z",
-          "value": 42.34408315565032
-        },
-        {
-          "timestamp": "2025-08-19T11:06:06Z",
-          "value": 43.622372497418304
-        },
-        {
-          "timestamp": "2025-08-19T11:07:07Z",
-          "value": 42.88736030379241
-        },
-        {
-          "timestamp": "2025-08-19T11:08:07Z",
-          "value": 42.73127019554282
-        }
-      ],
-      "name": "SYSTEM_NORMALIZED_CPU_USER",
-      "units": "PERCENT"
-    },
-    "cacheWriteOut": 32667398144,
-    "journalWrite": 15536429989,
-    "meanIops": 276,
-    "cachePageReadPerSecondKB": 12,
-    "compressedDataPerSecondKB": 42191,
-    "journalPerSecondKB": 20066,
-    "docSizeKB": 1,
-    "cacheReadInMB": 0,
-    "meancpu": 46,
-    "iowait": 7,
-    "estimatedIOPS": 255
-  }
-]
-```
+| 1 | 72 | 4 | 39 | 72761 | 34643 | 459 | 466 |
+| 4 | 64 | 8 | 37 | 84520 | 39824 | 523 | 536 |
+| 32 | 64 | 9 | 42 | 83136 | 39721 | 522 | 535 |
+| 256 | 62 | 11 | 32 | 85306 | 41978 | 529 | 556 |
+| 2048 | 60 | 15 | 10 | 86993 | 42083 | 514 | 559 |
   
 
 ### Analysis
@@ -188,6 +102,8 @@ inserted in the Oplog, the Write-ahead-log and the collection, even allowing for
 compression this is likely limited by IOPS.
 
 ## Impact of client write batch size on write speed
+
+### Description
 
 MongoDB allows you to send multiple write operations to the database in a single
 network request. When using simply insertOne(), replaceOne() or save() in Spring
@@ -207,6 +123,28 @@ increase concurrency but it is still far less efficient.
 In this test we insert 2GB of data ( 512,000 4KB documents ) using differening
 network write batch size to illustrate the impact of not correctly batching
 writes for ingestion.
+
+### Performance
+
+| Write Batch Size | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
+| --: | --: | --: | --: | --: |
+| 1 | 1594 | 24576 | 3947 | 15.79 |
+| 10 | 536 | 24576 | 11742 | 46.97 |
+| 100 | 407 | 24576 | 15456 | 61.83 |
+| 1000 | 354 | 24576 | 17759 | 71.04 |
+| 2000 | 356 | 24576 | 17695 | 70.78 |
+  
+
+### Resource Usage
+
+| Write Batch Size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | Predicted IOPS | Actual mean IOPS |
+| --: | --: | --: | --: | --: | --: | --: | --: |
+| 1 | 71 | 6 | 52 | 21753 | 11071 | 180 | 618 |
+| 10 | 66 | 8 | 107 | 61113 | 28274 | 456 | 548 |
+| 100 | 67 | 5 | 78 | 78430 | 36658 | 528 | 514 |
+| 1000 | 70 | 7 | 210 | 89599 | 42078 | 724 | 571 |
+| 2000 | 73 | 5 | 278 | 89036 | 41925 | 790 | 569 |
+  
 
 ## To Add
 
