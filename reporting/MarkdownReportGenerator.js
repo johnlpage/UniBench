@@ -6,7 +6,7 @@ class MarkdownReportGenerator {
 
 
     constructor(mongoUrl, dbName) {
-        this.debugMode = false;
+        this.debugMode = true;
         this.client = new MongoClient(mongoUrl);
         this.dbName = dbName;
         this.chartRenderer = new ChartJSNodeCanvas({width: 800, height: 400});

@@ -11,49 +11,48 @@ Ignore content for now.
 
 ## About this document
 
-This document shows the expected performance of MongoDB when performing a given
-task. Each table shows the impacton performance when changing parameters. For
-example, adding an index. This is testing only Database performance, you should
-assume that the client is using MongoDB optimally and that there are no network
-constraints between client and server.
+This document provides an indication for the expected performance of MongoDB in
+specific tasks. Each table demonstrates how performance is affected by varying
+parameters, such as adding an additional index. The focus is strictly on
+database
+performance; assume the client is interacting with MongoDB optimally and there
+are no network constraints between the client and the server.
 
-Unless otherwise specified, the database tested is a 3-node Replica Set in
-MongoDB Atlas using an M30 (2 x vCPU, 8GB RAM, 2GB configured as Cache). This is
-using default of 3,000 IOPS on Amazon Web Services. Writes are using write
-concern majority, all reads
-are from the primary.
+Unless otherwise stated, the tests were carried out on a 3-node replica set in
+MongoDB Atlas using an M30 instance (2 vCPUs, 8GB RAM, and 2GB configured as
+cache) with 3,000 IOPS on Amazon Web Services. Writes use a majority write
+concern, and all reads are from the primary node.
 
-In MongoDB, you can scale vertically by using larger hardware but also
-horizontally by adding more replica sets, many workloads will scale linearly to
-1000's of times the throughput shown here.
+MongoDB scales vertically by utilizing more powerful hardware or horizontally by
+introducing additional replica sets. Many workloads can scale linearly to
+thousands
+of times the throughput shown here.
 
-The intent of this document is to assist in understanding the approximate
-expected performance of MongoDB. This information can be used either to verify
-that your own application running on MongoDB is performing as expected or to
-help you make decisions about how to configure your MongoDB instance for a given
-performance target.
+The purpose of this document is to help readers understand expected MongoDB
+performance. It can be used to verify your own application's
+performance or guide decisions about sizing MongoDB to meet specific
+performance goals.
 
-It is not possible to document every possible combination of operations or how a
-mix of operations will interact, however, this data should allow you to infer
-that. Notes will be supplied with each test where the results show something of
-significance.
+Although it is not possible to document every combination of operations or
+workload mix, the provided results should allow you to make reasonable
+inferences. Notes are included for each test to highlight significant results.
+The test framework is also relatively easy to adapt to your own specific needs.
 
-The performance of MongoDB or any database will depend on the available CPU and
-Disk I/O capability. Available RAM will further reduce the amount of Disk I/O
-required by caching and amortizing write requests where safe to do so. This
-assumes an ideal client as used in most of these cases, however, some client
-constructs and then require more work per write operation by the server, which
-is demonstrated in later examples.
+Performance depends on available CPU, disk I/O capability, and RAM. Adequate RAM
+can reduce disk I/O requirements through caching and efficient write
+amortisation.
+While the examples assume an optimal client setup, certain client-side
+operations result in additional server workload, this is demonstrated in some
+examples.
 
-The author has tried to include explanations for the results and the underlying
-low-level behavior that makes them so with each example.
+Explanations of test results and the underlying low-level behavior affecting
+them are provided where relevant.
 
 # Data Ingestion
 
-This section covers getting data from outside MongoDB into MongoDB. Either data
-known to be new or data where some records are new, doem are modified and others
-are identical to existing records, existing in this case being based on a known
-key field.
+This section discusses the process of importing data into MongoDB, whether it is
+entirely new data or a mix of new, modified, and identical (existing) records.
+Existing records are identified by a known key field
 
 ## Impact of document size on insert speed
 
@@ -68,7 +67,7 @@ appended with minimal random I/O and maximal use of IOPS.
 
 Data like this is very quick to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
-logging use cases.
+logging or cachhig use cases.
 
 ### Performance
 
@@ -138,40 +137,35 @@ logging use cases.
 
 ### Analysis
 
-With small document, there are considerably more index entries for the primary
-key which we can assume adds some CPU overhead even when they are essentially
-sequential. The default volumnes used for these tests are AWS GP3 which have
-3,000 IOPS and 125MIB/S write speed. As each inserted document needs to be
-inserted in the Oplog, the Write-ahead-log (journal) and the collection we can
-see that we are hitting this limit even though we are using only about 18% of
-IOPS.
+Smaller documents generate more primary key index entries, which introduces
+overhead even when these entries are sequential. These tests use AWS GP3 storage
+volumes with 3,000 IOPS and 125 MiB/s write speed. Each inserted document
+requires insertion into the Oplog, Write-Ahead Log (WAL), and the collection.
+Even with compression, this workflow is likely constrained by IOPS.
 
 ## Impact of client write batch size on write speed
 
 ### Description
 
-MongoDB allows you to send multiple write operations to the database in a single
-network request. As of MongoDB 8.0 these can even be writes to different
-colleciotns.
-Conversely, when using simply insertOne(), replaceOne() ( or save() in Spring
-Data) then each document is sent individually. This not only incurs a network
-round trip per document but also needs each document to independently
-wait for durability, requiring a network round trip to a secondary and awaiting
-a periodic disk flush on the secondary and primary.
+MongoDB lets you send multiple write operations in a single network request.
+Using methods like insertOne(), replaceOne(), or save() in Spring Data results
+in each document being sent individually. This incurs network round-trip latency
+for each document and requires independent durability checks. These checks
+involve network round-trips to secondary nodes and periodic disk flushes on both
+primaries and secondaries.
 
-When you send multiple write operations in a single network call, then the cost
-of
-the durability is shared between all the documents; there can be a
-little overhead for a larger batch whilst waiting for the whole batch to be
-processed, this still results in much higher throughput, albeit with some
-additional latency.
+Batching write operations combines these costs across multiple documents,
+reducing the overall overhead. While larger batches may slightly increase
+latency due to processing time, they generally lead to significantly higher
+throughput.
 
-When processing single writes or smaller batches, you can use more threads/async
-toincrease concurrency, but it is still far less efficient.
+Single writes can improve performance by increasing concurrency through
+asynchronous operations or multi-threading, but batching documents remains far
+more efficient.
 
-In this test we insert 24GB of data ( 6.2 Million 4 KB documents ) using
-differing network write batch sizes to illustrate the impact of not incorrectly
-batching writes for ingestion. We use 48 threads loading in parallel.
+This test evaluates the ingestion of 2GB of data (512,000 documents of 4KB size)
+while varying the network write batch sizes to illustrate the importance of
+batching.
 
 ### Performance
 
@@ -181,11 +175,7 @@ batching writes for ingestion. We use 48 threads loading in parallel.
   "pipeline": [
     {"$match": {"_id.testname" : "insert_batchsize"}},
     {"$set": { "totalKB" : { "$multiply" : [ "$test_config.docSizeKB", "$test_config.totalDocsToInsert"]}}},
-  { "$set" : { "opTimeWrites": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "OP_EXECUTION_TIME_WRITES"]}}}}}},
-    { "$set" : { "opTimeWrites" : { "$filter": {  "input" : "$opTimeWrites.dataPoints", "cond": { "$ne" : [ "$$this.value",null]}}}}},
- {   "$set" : { "opLatency" : {"$round": { "$avg" : "$opTimeWrites.value"}}}},
     {"$project": {
-"opTimeWrites":1,"opLatency":1,
                   "batchsize": "$variant.writeBatchSize","totalKB":1,"totalDocsToInsert":1,
                   "totalMB": {"$round":{ "$divide":  [ "$totalKB",1024]} },
                   "durationS": {"$round":{"$divide":[ "$duration",1000]}},
@@ -194,8 +184,8 @@ batching writes for ingestion. We use 48 threads loading in parallel.
                   "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$test_config.totalDocsToInsert"]}, "$duration"]}]}
     }},
     {"$sort":{ "docSizeKB": 1}}],
-    "columns": ["batchsize", "durationS","totalMB","DocsPerSecond","MBperSecond","opLatency"],
-    "headers": ["Write Batch Size", "Time Taken (s) ","Data Loaded (MB)", "Speed (docs/s)", "Speed (MB/s)","Average Op Latency (ms)"]
+    "columns": ["batchsize", "durationS","totalMB","DocsPerSecond","MBperSecond"],
+    "headers": ["Write Batch Size", "Time Taken (s) ","Data Loaded (MB)", "Speed (docs/s)", "Speed (MB/s)"]
 }
 -->  
 
@@ -210,11 +200,8 @@ batching writes for ingestion. We use 48 threads loading in parallel.
     { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
     { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
     { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
-
-  
     { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
     { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
-
 
     { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
 
@@ -225,7 +212,6 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
     { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
  {   "$set" : { "meanIops" : {"$round": { "$avg" : "$totalIops.dataPoints.value"}}}},
-
     { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
     { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
     { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
@@ -248,45 +234,18 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 }
 -->  
 
-### Analysis
-
-With the 48 threads we have we see that individual writes (batch size 1) it
-throttled by network hops and disk flushes to <4000 inserts per second - by
-batching we get this up to just under 18,000 inserts/second. We are at this
-point hitting the 125MB/s write limit of the AWS GP3 volume.
-
-We can see that the optimal bulk insertion size here is 1,000 documents with a
-slight drop in speed at 2,000. Notably the IOPS is a little higher for the
-single inserts even though the throughput is lower, this is because there are
-extra writes/flushes required to make each record separately durable, there is a
-lack of amortization of resources.
-
 ## To Add
 
-* Ingesting data
-    * ~~Document size~~
-    * ~~Batching vis Single Insert~~
-    * ObjectId vs BusinessID vs UUID
-    * number of indexes and cache
-    * Index type
-    * Iops (Provisioned vi Standard)
-    * Instance sizes
-* Replacing Data
-    * Replace
-    * Replace and cache
-    * Updates
-    * Replace
-    * Update
-    * Impacted indexes
-* Reading Data
-    * Retrieval single
-    * Retrieval set
-    * Retrieval page N
-    * Retrieval next page
-    * Retrieval part index
-    * Retrieval $in
-    * Retrieval out of cache
-* Aggregation
-    * Aggregation group
-    * Aggregation ¢lookup
-* Deletion
+The following tests will be covered in future sections:
+
+* Ingesting Data: Document size and performance impact
+* Batching vs Single Insert: Performance and overhead comparison
+* ObjectId vs UUID: Effects on indexing and resource usage
+* NUM Index and Cache: Optimization considerations
+* Index Type: Implications for query performance
+* Replace Tests: Replace versus update mechanics
+* I/O Operations: Detailed discussion on IOPS and disk flushes
+* Updates: Performance variations based on index configurations
+* Retrieval Tests: Single results, sets, pagination, and partial indexes
+* Aggregation: Performance metrics for $group and $lookup operations
+* Deletion Tests: Efficiency of removal operations
