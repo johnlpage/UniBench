@@ -64,7 +64,10 @@ class MarkdownReportGenerator {
         table += `| ${headers.map(() => '--:').join(' | ')} |\n`;
 
         results.forEach(row => {
-            const values = columns.map(column => row[column] || '');
+            const values = columns.map(column => {
+                const value = row[column];
+                return value === null || value === undefined ? '' : value;
+            });
             table += `| ${values.join(' | ')} |\n`;
         });
 

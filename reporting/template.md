@@ -105,22 +105,21 @@ logging use cases.
     { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
     { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
     { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
-
     { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
-
     { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
                                                                             "$before_status.wiredTiger.block-manager.bytes written"]}}},
-
     { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
-
     { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
- {   "$set" : { "meanIops" : {"$round": { "$avg" : "$totalIops.dataPoints.value"}}}},
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
     { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
     { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
     { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
-
     {"$project": {
-                 "userCPU":1,"meanIops":1,
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},
                 "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
                 "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
                 "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
@@ -128,11 +127,11 @@ logging use cases.
         }
     },
     { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
- { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
-{"$sort":{ "docSizeKB": 1}}],
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+  {"$sort":{ "docSizeKB": 1}}],
 
-    "columns": ["docSizeKB","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","estimatedIOPS","meanIops" ],
-    "headers": ["Document Size (KB)","CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "Predicted IOPS","Actual mean IOPS"]
+    "columns": ["docSizeKB","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite","meanRead" ],
+    "headers": ["Document Size (KB)","CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
 }
 -->  
 
@@ -210,41 +209,35 @@ batching writes for ingestion. We use 48 threads loading in parallel.
     { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
     { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
     { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
-
-  
     { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
     { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
-
-
     { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
-
     { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
                                                                             "$before_status.wiredTiger.block-manager.bytes written"]}}},
-
     { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
-
     { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
- {   "$set" : { "meanIops" : {"$round": { "$avg" : "$totalIops.dataPoints.value"}}}},
-
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
     { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
     { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
     { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
-
-    {"$project": {
- "batchsize": "$variant.writeBatchSize",
-                 "userCPU":1,"meanIops":1,
+    {"$project": {"batchsize": "$variant.writeBatchSize",
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},
                 "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
-                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,"totalRead":1,
                 "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
                 "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
         }
     },
     { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
- { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
-{"$sort":{ "docSizeKB": 1}}],
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+  {"$sort":{ "docSizeKB": 1}}],
 
-    "columns": ["batchsize","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","estimatedIOPS","meanIops" ],
-    "headers": ["Write Batch Size","CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "Predicted IOPS","Actual mean IOPS"]
+    "columns": ["batchsize","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite","meanRead" ],
+    "headers": ["Write batch size","CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
 }
 -->  
 
@@ -283,21 +276,120 @@ In the middle ground an ID May have an inituial portion such as an account ID or
 Customer ID followed by a timestamp - in this case there will be one active
 block per user.
 
-This test looks at the impact of using ObjectID vs UUID vis a
-constructed if of the form ACCXXXXXX_YYYYYYYYYYYYYYYY where XXXXX is in the
-range 1-20,000 and YYYYYYYYYYYYYYYYY is a timestamp in milliseconds since 1970.
-We insert 24 Million 1KB documents and measure the speed of each variant.
+This test looks at the impact of using an ObjectID vs a random UUID versus a
+typical
+id constructed from AccountId and Timestamp such as you might use to record a
+financial
+transaction (BUSINESS_ID). In the Oatter case the id is a string srting with ACC
+followed by
+5 digits for the account and 8 hex characters for the timestamp.
+We insert 24 Million 1KB documents and measure the speed of each variant. The
+insert batch size was 1,000.
 
 ### Performance
 
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_idtype"}},
+    {"$set": { "totalKB" : { "$multiply" : [ "$test_config.docSizeKB", "$test_config.totalDocsToInsert"]}}},
+  { "$set" : { "opTimeWrites": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "OP_EXECUTION_TIME_WRITES"]}}}}}},
+    { "$set" : { "opTimeWrites" : { "$filter": {  "input" : "$opTimeWrites.dataPoints", "cond": { "$ne" : [ "$$this.value",null]}}}}},
+ {   "$set" : { "opLatency" : {"$round": { "$avg" : "$opTimeWrites.value"}}}},
+    {"$project": {
+"opTimeWrites":1,"opLatency":1,
+                  "idtype": "$variant.idType","totalKB":1,"totalDocsToInsert":1,
+                  "totalMB": {"$round":{ "$divide":  [ "$totalKB",1024]} },
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0,
+                  "MBperSecond": { "$round" : [ {"$divide": ["$totalKB", "$duration"]},2]},
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$test_config.totalDocsToInsert"]}, "$duration"]}]}
+    }},
+    {"$sort":{ "docSizeKB": 1}}],
+    "columns": ["idtype", "durationS","totalMB","DocsPerSecond","MBperSecond","opLatency"],
+    "headers": ["Primary Key format", "Time Taken (s)","Data Loaded (MB)", "Speed (docs/s)", "Speed (MB/s)","Average Op Latency (ms)"]
+}
+-->  
+
 ### Resource Usage
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_idtype" }},
+    { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
+    { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
+    { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
+    { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
+    { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
+    { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
+    { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+    { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
+                                                                            "$before_status.wiredTiger.block-manager.bytes written"]}}},
+    { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
+    { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
+    { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+    { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
+    {"$project": {"batchsize": "$variant.writeBatchSize",
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
+                "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
+                "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
+        }
+    },
+    { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+  {"$sort":{ "docSizeKB": 1}}],
+
+    "columns": ["idtype","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite","meanRead" ],
+    "headers": ["Primary Key format", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
+}
+-->  
+
+### Analysis
+
+As expected - the more random a value the slower it is to write as the index
+grows larger than RAM. What is not show here is that the UUID becomes ever
+slower over time as the index grows, the Business ID will stabilise.
+
+The Metrics returned for Write from cache are considerably higher than expected
+and to not tally with the bytes written to the disk by the OS, this is an
+indicaiton that this metric is not a direct indication of bytes flushed to disk,
+unlike the write to WAL metric.
+
+The Business ID seems to require about 65% of the reads into cache that the UUID
+does, but as expected far fewer blocks are dirtied when writing. With 20,000 '
+accounts'
+and only 24 million records, given the even distribution, it's possible that hat
+there are still no 'cold' blocks in the cache.
+
+## Impact of number of indexes on write speed
+
+### Description
+
+This test shows how each addition index, on a field containing a random number
+impacts insert performance. As seen in the _id test abouve random indexes are
+the
+worst performing compated to sequential or recent-date indexes which are the
+best performing.
+
+We will load 6M, 4KB documents and index N simple integer fields in each.
 
 ## To Add
 
 * Ingesting data
     * ~~Document size~~
     * ~~Batching vis Single Insert~~
-    * ObjectId vs BusinessID vs UUID
+    * ~~ObjectId vs BusinessID vs UUID~~
     * number of indexes and cache
     * Index type
     * Iops (Provisioned vi Standard)

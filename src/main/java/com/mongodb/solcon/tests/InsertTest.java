@@ -32,7 +32,9 @@ public class InsertTest extends BaseMongoTest {
   String bigrandomString;
   int totalDocsToInsert;
   int writeBatchSize;
+  int nSecondaryIndexes;
   String idType;
+
   HashMap<Integer, Integer> map = new HashMap<>();
 
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
@@ -43,35 +45,7 @@ public class InsertTest extends BaseMongoTest {
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
-    Document variant = config.get("variant", Document.class);
-
-    idType = testConfig.getString("idType");
-
-    if (variant != null && variant.getString("idType") != null) {
-      idType = variant.getString("idType");
-    }
-
-    // Allow variation of batch size
-
-    writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
-    if (variant != null && variant.getInteger("writeBatchSize") != null) {
-      writeBatchSize = variant.getInteger("writeBatchSize");
-    }
-    // Approx Doc Size in bytes - get from top level unless in varaint
-    if (testConfig.getDouble("docSizeKB") != null) {
-      docsizeBytes = (int) (testConfig.getDouble("docSizeKB") * 1024);
-    }
-
-    totalDocsToInsert = testConfig.getInteger("totalDocsToInsert", 1000);
-
-    if (variant != null && variant.getDouble("docSizeKB") != null) {
-      docsizeBytes = (int) (variant.getDouble("docSizeKB") * 1024);
-    }
-
-    if (variant != null && variant.getInteger("totalDocsToInsert") != null) {
-      totalDocsToInsert = variant.getInteger("totalDocsToInsert");
-    }
-
+    parseTestParams();
     // Depth is used to indcate the maximum number of fields at a given level
     // Min is 5 - so with 5 we will take a new level every 5 at this level
     bigrandomString = Utils.BigRandomText(SAMPLESTRINGLENGTH);
@@ -89,6 +63,42 @@ public class InsertTest extends BaseMongoTest {
       bytes[8 + i] = (byte) (leastSignificantBits >>> (8 * (7 - i)));
     }
     return bytes;
+  }
+
+  void parseTestParams() {
+    Document variant = testConfig.get("variant", Document.class);
+
+    idType = testConfig.getString("idType");
+    if (variant != null && variant.getString("idType") != null) {
+      idType = variant.getString("idType");
+    }
+
+    // Allow variation of batch size
+
+    writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
+    if (variant != null && variant.getInteger("writeBatchSize") != null) {
+      writeBatchSize = variant.getInteger("writeBatchSize");
+    }
+
+    nSecondaryIndexes = testConfig.getInteger("nSecondaryIndexes", 0);
+    if (variant != null && variant.getInteger("nSecondaryIndexes") != null) {
+      nSecondaryIndexes = variant.getInteger("nSecondaryIndexes");
+    }
+
+    // Approx Doc Size in bytes - get from top level unless in varaint
+    if (testConfig.getDouble("docSizeKB") != null) {
+      docsizeBytes = (int) (testConfig.getDouble("docSizeKB") * 1024);
+    }
+
+    totalDocsToInsert = testConfig.getInteger("totalDocsToInsert", 1000);
+
+    if (variant != null && variant.getDouble("docSizeKB") != null) {
+      docsizeBytes = (int) (variant.getDouble("docSizeKB") * 1024);
+    }
+
+    if (variant != null && variant.getInteger("totalDocsToInsert") != null) {
+      totalDocsToInsert = variant.getInteger("totalDocsToInsert");
+    }
   }
 
   public void run() {
@@ -139,12 +149,21 @@ public class InsertTest extends BaseMongoTest {
   // Actually exactly not dropping data in the simple version
   // Maybe a V2 that does a second insert into same volleciton though
   public void GenerateData() {
+    parseTestParams();
     logger.info("No data generation was required");
   }
 
   public void TestReset() {
+    parseTestParams();
+
     logger.info("Dropping {}", collection.getNamespace());
     collection.drop();
+    // If we need any secondary indexes make them here
+    for (int idxno = 0; idxno < nSecondaryIndexes; idxno++) {
+
+      logger.info("Creating secondary index on {}", "intfield" + (idxno + 1));
+      collection.createIndex(new Document("intfield" + (idxno + 1), 1));
+    }
   }
 
   // WarmCache is called before each rune
@@ -161,24 +180,26 @@ public class InsertTest extends BaseMongoTest {
     int fNo = 1;
 
     writer.writeStartDocument();
-    switch (idType) {
-      case "UUID":
-        UUID uuid = UUID.randomUUID();
-        BsonBinary bsonBinary = new BsonBinary(BsonBinarySubType.UUID_STANDARD, asBytes(uuid));
-        writer.writeBinaryData("_id", bsonBinary);
-        break;
-      case "BUSINESS_ID":
-        int cust = random.nextInt(20000);
-        int custOneUp = map.getOrDefault(cust, 0);
-        map.put(cust, custOneUp + 1);
-        String busId = String.format("ACC%05dx_%06x%02x", cust, custOneUp, threadNo);
-        writer.writeString("_id", busId);
-        break;
-      default:
-        writer.writeObjectId("_id", new ObjectId());
-        break;
-    }
+    if (idType != null) {
 
+      switch (idType) {
+        case "UUID":
+          UUID uuid = UUID.randomUUID();
+          BsonBinary bsonBinary = new BsonBinary(BsonBinarySubType.UUID_STANDARD, asBytes(uuid));
+          writer.writeBinaryData("_id", bsonBinary);
+          break;
+        case "BUSINESS_ID":
+          int cust = random.nextInt(20000);
+          int custOneUp = map.getOrDefault(cust, 0);
+          map.put(cust, custOneUp + 1);
+          String busId = String.format("ACC%05dx_%06x%02x", cust, custOneUp, threadNo);
+          writer.writeString("_id", busId);
+          break;
+        default:
+          writer.writeObjectId("_id", new ObjectId());
+          break;
+      }
+    }
     while (buffer.size() < docsizeBytes) {
 
       writer.writeInt32("intfield" + fNo, random.nextInt(100_000));

@@ -72,25 +72,23 @@ logging use cases.
 
 ### Performance
 
-| Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
-| --: | --: | --: | --: | --: |
-| 1 | 448 | 24576 | 56115 | 56.12 |
-| 4 | 374 | 24576 | 16808 | 67.23 |
-| 32 | 363 | 24576 | 2169 | 69.4 |
-| 256 | 333 | 24576 | 295 | 75.52 |
-| 2048 | 321 | 24576 | 38 | 78.49 |
-  
+| Document Size (KB) | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
+|-------------------:|---------------:|-----------------:|---------------:|-------------:|
+|                  1 |            448 |            24576 |          56115 |        56.12 |
+|                  4 |            374 |            24576 |          16808 |        67.23 |
+|                 32 |            363 |            24576 |           2169 |         69.4 |
+|                256 |            333 |            24576 |            295 |        75.52 |
+|               2048 |            321 |            24576 |             38 |        78.49 |
 
 ### Resource Usage
 
-| Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | Predicted IOPS | Actual mean IOPS |
-| --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 72 | 4 | 39 | 72761 | 34643 | 459 | 466 |
-| 4 | 64 | 8 | 37 | 84520 | 39824 | 523 | 536 |
-| 32 | 64 | 9 | 42 | 83136 | 39721 | 522 | 535 |
-| 256 | 62 | 11 | 32 | 85306 | 41978 | 529 | 556 |
-| 2048 | 60 | 15 | 10 | 86993 | 42083 | 514 | 559 |
-  
+| Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                  1 |            72 |                        4 |                        39 |                   72761 |               34643 |      466 |              102 |               1 |
+|                  4 |            64 |                        8 |                        37 |                   84520 |               39824 |      536 |              119 |               1 |
+|                 32 |            64 |                        9 |                        42 |                   83136 |               39721 |      535 |              117 |               1 |
+|                256 |            62 |                       11 |                        32 |                   85306 |               41978 |      556 |              121 |               1 |
+|               2048 |            60 |                       15 |                        10 |                   86993 |               42083 |      559 |              119 |               6 |
 
 ### Analysis
 
@@ -131,25 +129,23 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
 ### Performance
 
-| Write Batch Size | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| 1 | 1594 | 24576 | 3947 | 15.79 | 9 |
-| 10 | 536 | 24576 | 11742 | 46.97 | 34 |
-| 100 | 407 | 24576 | 15456 | 61.83 | 269 |
-| 1000 | 354 | 24576 | 17759 | 71.04 | 2321 |
-| 2000 | 356 | 24576 | 17695 | 70.78 | 5074 |
-  
+| Write Batch Size | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+|-----------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|                1 |           1594 |            24576 |           3947 |        15.79 |                       9 |
+|               10 |            536 |            24576 |          11742 |        46.97 |                      34 |
+|              100 |            407 |            24576 |          15456 |        61.83 |                     269 |
+|             1000 |            354 |            24576 |          17759 |        71.04 |                    2321 |
+|             2000 |            356 |            24576 |          17695 |        70.78 |                    5074 |
 
 ### Resource Usage
 
-| Write Batch Size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | Predicted IOPS | Actual mean IOPS |
-| --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 71 | 6 | 52 | 21753 | 11071 | 180 | 618 |
-| 10 | 66 | 8 | 107 | 61113 | 28274 | 456 | 548 |
-| 100 | 67 | 5 | 78 | 78430 | 36658 | 528 | 514 |
-| 1000 | 70 | 7 | 210 | 89599 | 42078 | 724 | 571 |
-| 2000 | 73 | 5 | 278 | 89036 | 41925 | 790 | 569 |
-  
+| Write batch size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+|-----------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                1 |            71 |                        6 |                        52 |                   21753 |               11071 |      618 |               32 |               0 |
+|               10 |            66 |                        8 |                       107 |                   61113 |               28274 |      548 |               85 |               0 |
+|              100 |            67 |                        5 |                        78 |                   78430 |               36658 |      514 |              109 |               1 |
+|             1000 |            70 |                        7 |                       210 |                   89599 |               42078 |      571 |              124 |               1 |
+|             2000 |            73 |                        5 |                       278 |                   89036 |               41925 |      569 |              124 |               1 |
 
 ### Analysis
 
@@ -164,12 +160,74 @@ single inserts even though the throughput is lower, this is because there are
 extra writes/flushes required to make each record separately durable, there is a
 lack of amortization of resources.
 
+## Impact of primary key type on write speed
+
+### Description
+
+All Documents in MongoDB ha a primary key defined as the first field inthe
+document, this field is always called `_id`. Where the application does not
+supply it then the default value is assigned, a Unique ObjectId() value -
+ObjectID is a 12 byte GUID where the firat 4 bytes are the time in seconds since
+1970, these are therefore approximately sequential.
+
+The `_id` index is a BTree index, inserting mostly sequential values means older
+parts of the index do not need to be acessed for writes and new values are
+inserted into a small set of blocks reducing the write I/O
+
+By contrast, if a wholly random value is used for `_id` like a UUID then each
+new value may need to read or write any part of the index resulting in far more
+dirty blocks to be written to disk and more RAM required to cache it.
+
+In the middle ground an ID May have an inituial portion such as an account ID or
+Customer ID followed by a timestamp - in this case there will be one active
+block per user.
+
+This test looks at the impact of using an ObjectID vs a random UUID versus a
+typical
+id constructed from AccountId and Timestamp such as you might use to record a
+financial
+transaction (BUSINESS_ID). In the Oatter case the id is a string srting with ACC
+followed by
+5 digits for the account and 8 hex characters for the timestamp.
+We insert 24 Million 1KB documents and measure the speed of each variant.
+
+### Performance
+
+| Primary Key format | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+|-------------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|          OBJECT_ID |            485 |            24576 |          51917 |        51.92 |                     165 |
+|               UUID |           1218 |            24576 |          20657 |        20.66 |                     515 |
+|        BUSINESS_ID |           1198 |            24576 |          21003 |           21 |                     507 |
+
+### Resource Usage
+
+| Primary Key format | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|          OBJECT_ID |            69 |                        5 |                        22 |                   66235 |               31590 |      459 |               93 |               1 |
+|               UUID |            91 |                        1 |                      8974 |                  152368 |               12804 |      971 |              103 |               0 |
+|        BUSINESS_ID |            92 |                        0 |                      6010 |                  118000 |               12866 |      381 |               58 |               0 |
+
+### Analysis
+
+As expected - the more random a value the slower it is to write as the index
+grows larger than RAM. What is not show here is that the UUID becomes ever
+slower over time as the index grows, the Business ID will stabilise.
+
+The Metrics returned for Write from cache are considerably higher than expected
+and to not tally with the bytes written to the disk by the OS, this is an
+indicaiton that this metric is not a direct indication of bytes flushed to disk,
+unlike the write to WAL metric.
+
+The Businedd ID seems to require about 65% of the reads into cache that the UUID
+does but as expected far
+fewer block are dirties when writing.
+
 ## To Add
 
 * Ingesting data
     * ~~Document size~~
     * ~~Batching vis Single Insert~~
-    * ObjectId vs BusinessID vs UUID
+    * ~~ObjectId vs BusinessID vs UUID~~
     * number of indexes and cache
     * Index type
     * Iops (Provisioned vi Standard)
