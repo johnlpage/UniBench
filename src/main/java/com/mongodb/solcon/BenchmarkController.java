@@ -93,13 +93,13 @@ public class BenchmarkController {
   }
 
   Document readConfigFile(String fileName) {
-    Document configFile;
+    Document configFile = null;
     try {
       String configString = new String(Files.readAllBytes(Paths.get(fileName)));
       configFile = Document.parse(configString);
     } catch (Exception ex) {
       logger.error("ERROR IN CONFIG: {} {} ", fileName, ex.getMessage());
-      return null;
+      System.exit(1);
     }
     return configFile;
   }

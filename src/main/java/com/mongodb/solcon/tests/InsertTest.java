@@ -5,11 +5,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.solcon.BaseMongoTest;
 import com.mongodb.solcon.Utils;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import org.bson.*;
+import org.bson.BsonBinary;
+import org.bson.BsonBinarySubType;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +27,13 @@ public class InsertTest extends BaseMongoTest {
   final int SAMPLESTRINGLENGTH = 1024 * 1024;
   MongoDatabase database;
   MongoCollection<RawBsonDocument> collection;
-  int maxFieldsPerObject = 200;
+  int maxFieldsPerObject;
   int docsizeBytes = 2048;
   String bigrandomString;
   int totalDocsToInsert;
-  int writeBatchSize = 1000;
+  int writeBatchSize;
+  String idType;
+  HashMap<Integer, Integer> map = new HashMap<>();
 
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
   /* We use this set of 3 fields repeated in our documents */
@@ -41,6 +44,12 @@ public class InsertTest extends BaseMongoTest {
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
     Document variant = config.get("variant", Document.class);
+
+    idType = testConfig.getString("idType");
+
+    if (variant != null && variant.getString("idType") != null) {
+      idType = variant.getString("idType");
+    }
 
     // Allow variation of batch size
 
@@ -70,6 +79,18 @@ public class InsertTest extends BaseMongoTest {
         Objects.requireNonNullElse(testConfig.getInteger("maxFieldsPerObject"), 200);
   }
 
+  private static byte[] asBytes(UUID uuid) {
+    long mostSignificantBits = uuid.getMostSignificantBits();
+    long leastSignificantBits = uuid.getLeastSignificantBits();
+    byte[] bytes = new byte[16];
+
+    for (int i = 0; i < 8; i++) {
+      bytes[i] = (byte) (mostSignificantBits >>> (8 * (7 - i)));
+      bytes[8 + i] = (byte) (leastSignificantBits >>> (8 * (7 - i)));
+    }
+    return bytes;
+  }
+
   public void run() {
 
     // Try to have defaults
@@ -84,26 +105,36 @@ public class InsertTest extends BaseMongoTest {
       reportCount++;
       size = size + d.getByteBuffer().remaining();
       if (batch.size() >= writeBatchSize) {
+        try {
+          collection.insertMany(batch);
+        } catch (Exception e) {
+          logger.error("Error inserting batch", e);
+        }
 
-        collection.insertMany(batch);
         if (threadNo == 0 && reportCount > docsPerThread / 20) {
           logger.info(
               "Inserted {} of {} = {}% complete",
               (doc + 1) * nThreads,
               docsPerThread * nThreads,
-              Math.floor(((doc + 1) * 100) / docsPerThread));
+              (double) (((doc + 1) * 100) / docsPerThread));
           reportCount = 0;
         }
         batch.clear();
       }
     }
-    if (batch.size() >= 0) {
+    if (!batch.isEmpty()) {
       if (threadNo == 0) logger.info("Inserting final batch of {}", (batch.size()));
 
-      collection.insertMany(batch);
+      try {
+        collection.insertMany(batch);
+      } catch (Exception e) {
+        logger.error("Error inserting batch", e);
+      }
       batch.clear();
     }
   }
+
+  // Reset is called for each variant
 
   // Actually exactly not dropping data in the simple version
   // Maybe a V2 that does a second insert into same volleciton though
@@ -111,10 +142,8 @@ public class InsertTest extends BaseMongoTest {
     logger.info("No data generation was required");
   }
 
-  // Reset is called for each variant
-
   public void TestReset() {
-    logger.info("Dropping " + collection.getNamespace().toString());
+    logger.info("Dropping {}", collection.getNamespace());
     collection.drop();
   }
 
@@ -125,17 +154,33 @@ public class InsertTest extends BaseMongoTest {
 
   // TODO - Figure out what wa want to control in our document
   // Size, NFields and Depth I guess
-  // We want ot be able to generate data very fast but pseiudo random
-
+  // We want ot be able to generate data very fast but pseudo random
   private RawBsonDocument createDocument() {
     BasicOutputBuffer buffer = new BasicOutputBuffer();
     BsonWriter writer = new BsonBinaryWriter(buffer);
     int fNo = 1;
 
-    int currentDepth = 0;
-
     writer.writeStartDocument();
+    switch (idType) {
+      case "UUID":
+        UUID uuid = UUID.randomUUID();
+        BsonBinary bsonBinary = new BsonBinary(BsonBinarySubType.UUID_STANDARD, asBytes(uuid));
+        writer.writeBinaryData("_id", bsonBinary);
+        break;
+      case "BUSINESS_ID":
+        int cust = random.nextInt(20000);
+        int custOneUp = map.getOrDefault(cust, 0);
+        map.put(cust, custOneUp + 1);
+        String busId = String.format("ACC%05dx_%06x%02x", cust, custOneUp, threadNo);
+        writer.writeString("_id", busId);
+        break;
+      default:
+        writer.writeObjectId("_id", new ObjectId());
+        break;
+    }
+
     while (buffer.size() < docsizeBytes) {
+
       writer.writeInt32("intfield" + fNo, random.nextInt(100_000));
       writer.writeDateTime(
           ("datefield" + fNo), 1754917200011L + random.nextLong(10_000_000_000L)); // TODO Bound

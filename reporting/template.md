@@ -261,6 +261,37 @@ single inserts even though the throughput is lower, this is because there are
 extra writes/flushes required to make each record separately durable, there is a
 lack of amortization of resources.
 
+## Impact of primary key type on write speed
+
+### Description
+
+All Documents in MongoDB ha a primary key defined as the first field inthe
+document, this field is always called `_id`. Where the application does not
+supply it then the default value is assigned, a Unique ObjectId() value -
+ObjectID is a 12 byte GUID where the firat 4 bytes are the time in seconds since
+1970, these are therefore approximately sequential.
+
+The `_id` index is a BTree index, inserting mostly sequential values means older
+parts of the index do not need to be acessed for writes and new values are
+inserted into a small set of blocks reducing the write I/O
+
+By contrast, if a wholly random value is used for `_id` like a UUID then each
+new value may need to read or write any part of the index resulting in far more
+dirty blocks to be written to disk and more RAM required to cache it.
+
+In the middle ground an ID May have an inituial portion such as an account ID or
+Customer ID followed by a timestamp - in this case there will be one active
+block per user.
+
+This test looks at the impact of using ObjectID vs UUID vis a
+constructed if of the form ACCXXXXXX_YYYYYYYYYYYYYYYY where XXXXX is in the
+range 1-20,000 and YYYYYYYYYYYYYYYYY is a timestamp in milliseconds since 1970.
+We insert 24 Million 1KB documents and measure the speed of each variant.
+
+### Performance
+
+### Resource Usage
+
 ## To Add
 
 * Ingesting data

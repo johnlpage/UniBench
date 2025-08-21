@@ -3,11 +3,18 @@
   "numberOfThreads": 10,
   "database": "unibench",
   "collection": "inserts",
+  "docSizeKB": 1.0,
+  "totalDocsToInsert": 25165824,
+  "writeBatchSize": 1000,
   "variants": [
     {
-      "docSizeKB": 1.0,
-      "totalDocsToInsert": 25165824,
-      "writeBatchSize": 4000
+      "idType": "BUSINESS_ID"
+    },
+    {
+      "idType": "OBJECT_ID"
+    },
+    {
+      "idType": "UUID"
     }
   ],
   "warmup": false
