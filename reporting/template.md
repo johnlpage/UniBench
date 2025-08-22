@@ -405,7 +405,7 @@ batch size is 1,000.
                   "MBperSecond": { "$round" : [ {"$divide": ["$totalKB", "$duration"]},2]},
                   "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$test_config.totalDocsToInsert"]}, "$duration"]}]}
     }},
-    {"$sort":{ "docSizeKB": 1}}],
+    {"$sort":{ "nindexes": 1}}],
     "columns": ["nindexes", "durationS","totalMB","DocsPerSecond","MBperSecond","opLatency"],
     "headers": ["Number of secondary indexes", "Time Taken (s)","Data Loaded (MB)", "Speed (docs/s)", "Speed (MB/s)","Average Op Latency (ms)"]
 }
@@ -447,7 +447,7 @@ batch size is 1,000.
     },
     { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
   { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
-  {"$sort":{ "docSizeKB": 1}}],
+  {"$sort":{ "nindexes": 1}}],
 
     "columns": ["nindexes","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite","meanRead" ],
     "headers": ["Number of secondary Indexes", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
