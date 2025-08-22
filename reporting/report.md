@@ -72,23 +72,25 @@ logging use cases.
 
 ### Performance
 
-| Document Size (KB) | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
-|-------------------:|---------------:|-----------------:|---------------:|-------------:|
-|                  1 |            448 |            24576 |          56115 |        56.12 |
-|                  4 |            374 |            24576 |          16808 |        67.23 |
-|                 32 |            363 |            24576 |           2169 |         69.4 |
-|                256 |            333 |            24576 |            295 |        75.52 |
-|               2048 |            321 |            24576 |             38 |        78.49 |
+| Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
+| --: | --: | --: | --: | --: |
+| 1 | 448 | 24576 | 56115 | 56.12 |
+| 4 | 374 | 24576 | 16808 | 67.23 |
+| 32 | 363 | 24576 | 2169 | 69.4 |
+| 256 | 333 | 24576 | 295 | 75.52 |
+| 2048 | 321 | 24576 | 38 | 78.49 |
+  
 
 ### Resource Usage
 
 | Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
-|                  1 |            72 |                        4 |                        39 |                   72761 |               34643 |      466 |              102 |               1 |
-|                  4 |            64 |                        8 |                        37 |                   84520 |               39824 |      536 |              119 |               1 |
-|                 32 |            64 |                        9 |                        42 |                   83136 |               39721 |      535 |              117 |               1 |
-|                256 |            62 |                       11 |                        32 |                   85306 |               41978 |      556 |              121 |               1 |
-|               2048 |            60 |                       15 |                        10 |                   86993 |               42083 |      559 |              119 |               6 |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| 1 | 72 | 4 | 39 | 72761 | 34643 | 466 | 102 | 1 |
+| 4 | 64 | 8 | 37 | 84520 | 39824 | 536 | 119 | 1 |
+| 32 | 64 | 9 | 42 | 83136 | 39721 | 535 | 117 | 1 |
+| 256 | 62 | 11 | 32 | 85306 | 41978 | 556 | 121 | 1 |
+| 2048 | 60 | 15 | 10 | 86993 | 42083 | 559 | 119 | 6 |
+  
 
 ### Analysis
 
@@ -129,23 +131,25 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
 ### Performance
 
-| Write Batch Size | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-|-----------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
-|                1 |           1594 |            24576 |           3947 |        15.79 |                       9 |
-|               10 |            536 |            24576 |          11742 |        46.97 |                      34 |
-|              100 |            407 |            24576 |          15456 |        61.83 |                     269 |
-|             1000 |            354 |            24576 |          17759 |        71.04 |                    2321 |
-|             2000 |            356 |            24576 |          17695 |        70.78 |                    5074 |
+| Write Batch Size | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+| --: | --: | --: | --: | --: | --: |
+| 1 | 1594 | 24576 | 3947 | 15.79 | 9 |
+| 10 | 536 | 24576 | 11742 | 46.97 | 34 |
+| 100 | 407 | 24576 | 15456 | 61.83 | 269 |
+| 1000 | 354 | 24576 | 17759 | 71.04 | 2321 |
+| 2000 | 356 | 24576 | 17695 | 70.78 | 5074 |
+  
 
 ### Resource Usage
 
 | Write batch size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-|-----------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
-|                1 |            71 |                        6 |                        52 |                   21753 |               11071 |      618 |               32 |               0 |
-|               10 |            66 |                        8 |                       107 |                   61113 |               28274 |      548 |               85 |               0 |
-|              100 |            67 |                        5 |                        78 |                   78430 |               36658 |      514 |              109 |               1 |
-|             1000 |            70 |                        7 |                       210 |                   89599 |               42078 |      571 |              124 |               1 |
-|             2000 |            73 |                        5 |                       278 |                   89036 |               41925 |      569 |              124 |               1 |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| 1 | 71 | 6 | 52 | 21753 | 11071 | 618 | 32 | 0 |
+| 10 | 66 | 8 | 107 | 61113 | 28274 | 548 | 85 | 0 |
+| 100 | 67 | 5 | 78 | 78430 | 36658 | 514 | 109 | 1 |
+| 1000 | 70 | 7 | 210 | 89599 | 42078 | 571 | 124 | 1 |
+| 2000 | 73 | 5 | 278 | 89036 | 41925 | 569 | 124 | 1 |
+  
 
 ### Analysis
 
@@ -189,23 +193,26 @@ financial
 transaction (BUSINESS_ID). In the Oatter case the id is a string srting with ACC
 followed by
 5 digits for the account and 8 hex characters for the timestamp.
-We insert 24 Million 1KB documents and measure the speed of each variant.
+We insert 24 Million 1KB documents and measure the speed of each variant. The
+insert batch size was 1,000.
 
 ### Performance
 
 | Primary Key format | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-|-------------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
-|          OBJECT_ID |            485 |            24576 |          51917 |        51.92 |                     165 |
-|               UUID |           1218 |            24576 |          20657 |        20.66 |                     515 |
-|        BUSINESS_ID |           1198 |            24576 |          21003 |           21 |                     507 |
+| --: | --: | --: | --: | --: | --: |
+| OBJECT_ID | 485 | 24576 | 51917 | 51.92 | 165 |
+| UUID | 1218 | 24576 | 20657 | 20.66 | 515 |
+| BUSINESS_ID | 1198 | 24576 | 21003 | 21 | 507 |
+  
 
 ### Resource Usage
 
 | Primary Key format | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
-|          OBJECT_ID |            69 |                        5 |                        22 |                   66235 |               31590 |      459 |               93 |               1 |
-|               UUID |            91 |                        1 |                      8974 |                  152368 |               12804 |      971 |              103 |               0 |
-|        BUSINESS_ID |            92 |                        0 |                      6010 |                  118000 |               12866 |      381 |               58 |               0 |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| OBJECT_ID | 69 | 5 | 22 | 66235 | 31590 | 459 | 93 | 1 |
+| UUID | 91 | 1 | 8974 | 152368 | 12804 | 971 | 103 | 0 |
+| BUSINESS_ID | 92 | 0 | 6010 | 118000 | 12866 | 381 | 58 | 0 |
+  
 
 ### Analysis
 
@@ -218,9 +225,48 @@ and to not tally with the bytes written to the disk by the OS, this is an
 indicaiton that this metric is not a direct indication of bytes flushed to disk,
 unlike the write to WAL metric.
 
-The Businedd ID seems to require about 65% of the reads into cache that the UUID
-does but as expected far
-fewer block are dirties when writing.
+The Business ID seems to require about 65% of the reads into cache that the UUID
+does, but as expected far fewer blocks are dirtied when writing. With 20,000 '
+accounts'
+and only 24 million records, given the even distribution, it's possible that hat
+there are still no 'cold' blocks in the cache.
+
+## Impact of number of indexes on write speed
+
+### Description
+
+This test shows how each addition index, on a field containing a random number
+impacts insert performance. As seen in the _id test abouve random indexes are
+the
+worst performing compated to sequential or recent-date indexes which are the
+best performing.
+
+We load 6M, 4KB documents and index N simple integer fields in each. The load
+batch size is 1,000.
+
+### Performance
+
+| Number of secondary indexes | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+| --: | --: | --: | --: | --: | --: |
+| 1 | 502 | 24576 | 12545 | 50.18 | 706 |
+| 2 | 649 | 24576 | 9699 | 38.8 | 973 |
+| 3 | 873 | 24576 | 7204 | 28.82 | 1420 |
+| 4 | 1157 | 24576 | 5440 | 21.76 | 2005 |
+| 8 | 3321 | 24576 | 1895 | 7.58 | 6521 |
+| 16 | 9916 | 24576 | 635 | 2.54 | 16663 |
+  
+
+### Resource Usage
+
+| Number of secondary Indexes | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| 1 | 82 | 1 | 2265 | 106126 | 29723 | 496 | 98 | 1 |
+| 2 | 88 | 0 | 3839 | 104354 | 22981 | 440 | 83 | 0 |
+| 3 | 91 | 0 | 5056 | 105503 | 17069 | 390 | 70 | 0 |
+| 4 | 93 | 0 | 5984 | 105108 | 12888 | 336 | 59 | 0 |
+| 8 | 93 | 1 | 6095 | 92053 | 4489 | 236 | 37 | 0 |
+| 16 | 98 | 0 | 6071 | 85292 | 1503 | 593 | 40 | 0 |
+  
 
 ## To Add
 

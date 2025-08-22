@@ -27,6 +27,7 @@ public class InsertTest extends BaseMongoTest {
   final int SAMPLESTRINGLENGTH = 1024 * 1024;
   MongoDatabase database;
   MongoCollection<RawBsonDocument> collection;
+  MongoCollection<RawBsonDocument> initialCollection;
   int maxFieldsPerObject;
   int docsizeBytes = 2048;
   String bigrandomString;
@@ -45,9 +46,11 @@ public class InsertTest extends BaseMongoTest {
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
+    initialCollection =
+        database.getCollection(
+            testConfig.getString("collection") + "_initial", RawBsonDocument.class);
     parseTestParams();
-    // Depth is used to indcate the maximum number of fields at a given level
-    // Min is 5 - so with 5 we will take a new level every 5 at this level
+
     bigrandomString = Utils.BigRandomText(SAMPLESTRINGLENGTH);
     maxFieldsPerObject =
         Objects.requireNonNullElse(testConfig.getInteger("maxFieldsPerObject"), 200);
@@ -146,11 +149,49 @@ public class InsertTest extends BaseMongoTest {
 
   // Reset is called for each variant
 
-  // Actually exactly not dropping data in the simple version
-  // Maybe a V2 that does a second insert into same volleciton though
   public void GenerateData() {
     parseTestParams();
-    logger.info("No data generation was required");
+    // If we have "initialDocsToInsert" then generate that many in a collection
+    // During reset() we will copy that into the test table - this is meaningful
+    // When talking about indexes. Where an empty index is much less expensive
+    int initialDocsToInsert = testConfig.getInteger("initialDocsToInsert", 0);
+    if (initialDocsToInsert > 0) {
+      initialCollection.drop();
+      List<RawBsonDocument> batch = new ArrayList<>();
+      int size = 0;
+      int reportCount = 0;
+      for (int doc = 0; doc < initialDocsToInsert; doc++) {
+        RawBsonDocument d = createDocument();
+        batch.add(d);
+        reportCount++;
+        size = size + d.getByteBuffer().remaining();
+        if (batch.size() >= writeBatchSize) {
+          try {
+            initialCollection.insertMany(batch);
+          } catch (Exception e) {
+            logger.error("Error inserting batch", e);
+          }
+
+          if (reportCount > initialDocsToInsert / 20) {
+            logger.info(
+                "Data Generation: Generated {} of {} = {}% complete",
+                doc + 1, initialDocsToInsert, (double) (((doc + 1) * 100) / initialDocsToInsert));
+            reportCount = 0;
+          }
+          batch.clear();
+        }
+      }
+      if (!batch.isEmpty()) {
+        if (threadNo == 0) logger.info("Generated final batch of {}", (batch.size()));
+
+        try {
+          initialCollection.insertMany(batch);
+        } catch (Exception e) {
+          logger.error("Error inserting batch", e);
+        }
+        batch.clear();
+      }
+    }
   }
 
   public void TestReset() {
@@ -158,11 +199,24 @@ public class InsertTest extends BaseMongoTest {
 
     logger.info("Dropping {}", collection.getNamespace());
     collection.drop();
-    // If we need any secondary indexes make them here
+    // If we need any secondary indices, make them here
     for (int idxno = 0; idxno < nSecondaryIndexes; idxno++) {
 
       logger.info("Creating secondary index on {}", "intfield" + (idxno + 1));
       collection.createIndex(new Document("intfield" + (idxno + 1), 1));
+    }
+
+    int initialDocsToInsert = testConfig.getInteger("initialDocsToInsert", 0);
+    if (initialDocsToInsert > 0) {
+      logger.info(
+          "Copying {} documents from initial collection to test collection",
+          initialCollection.estimatedDocumentCount());
+      initialCollection
+          .aggregate(
+              Arrays.asList(new Document("$out", collection.getNamespace().getCollectionName())))
+          .first();
+      logger.info(
+          "Copying complete:{} docs in test collection", collection.estimatedDocumentCount());
     }
   }
 

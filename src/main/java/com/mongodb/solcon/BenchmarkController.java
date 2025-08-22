@@ -37,6 +37,7 @@ public class BenchmarkController {
 
       mongoClient = MongoClients.create(mongoURI);
       Document rval = mongoClient.getDatabase("admin").runCommand(new Document("hello", 1));
+
       logger.info("{}", rval.toJson());
 
     } catch (Exception e) {
