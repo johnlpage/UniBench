@@ -376,14 +376,15 @@ there are still no 'cold' blocks in the cache.
 
 ### Description
 
-This test shows how each addition index, on a field containing a random number
-impacts insert performance. As seen in the _id test abouve random indexes are
-the
-worst performing compated to sequential or recent-date indexes which are the
+This test shows how each additional index, on a field containing a random
+integer
+number impacts insert performance. As seen in the _id test abouve random indexes
+are
+the worst performing compated to sequential or recent-date indexes which are the
 best performing.
 
-We load 6M, 4KB documents and index N simple integer fields in each. The load
-batch size is 1,000.
+We preload 3M x 4KB document then measure loading the next 3M , and index N
+simple integer fields in each. The load batch size is 1,000.
 
 ### Performance
 
