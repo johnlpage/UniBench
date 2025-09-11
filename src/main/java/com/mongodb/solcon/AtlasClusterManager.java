@@ -98,8 +98,6 @@ public class AtlasClusterManager {
             "numShards": 1,
             "regionConfigs": [
               {
-
-                  "oplogSizeMB":10000,
                 "electableSpecs": {
                   "diskIOPS": %d,
                   "ebsVolumeType": "%s",
@@ -147,7 +145,7 @@ public class AtlasClusterManager {
     }
     """,
             clusterName, diskSize, iops, diskType, tier);
-    logger.debug(payload);
+    logger.info(payload);
     // It does not exist we need to create it
     if (isClusterReady == 404) {
       HttpPost request = new HttpPost(url);
@@ -167,6 +165,7 @@ public class AtlasClusterManager {
         }
         throw new IOException("Failed to create cluster: " + response.getStatusLine());
       }
+
       logger.info("Cluster creation initiated for: " + clusterName);
 
       try {
@@ -175,6 +174,27 @@ public class AtlasClusterManager {
         if (entity != null) {
           String responseBody = EntityUtils.toString(entity); // Consume the entity
           System.out.println(responseBody);
+
+          // Send a Patch to fix the Oplog size
+          String fixOplog =
+              """
+                    { "oplogSizeMB": 12345  }
+                    """;
+          HttpPatch patchRequest = new HttpPatch(url + "/" + clusterName + "/processArgs");
+          patchRequest.setHeader("Content-Type", "application/json");
+          patchRequest.setHeader(HttpHeaders.ACCEPT, "application/vnd.atlas.2023-11-15+json");
+          patchRequest.setEntity(new StringEntity(fixOplog));
+          HttpResponse patchResponse = httpClient.execute(patchRequest);
+          int patchStatusCode = patchResponse.getStatusLine().getStatusCode();
+          if (patchStatusCode >= 300) {
+            logger.error("Failed to fix oplog size: " + patchResponse.getStatusLine());
+          } else {
+            entity = patchResponse.getEntity();
+            if (entity != null) {
+              responseBody = EntityUtils.toString(entity); // Consume the entity
+              System.out.println(responseBody);
+            }
+          }
         }
       } finally {
         // Close the response
