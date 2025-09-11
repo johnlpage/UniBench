@@ -135,7 +135,7 @@ public class AtlasClusterManager {
                   "nodeCount": 0,
                   "diskIOPS": 2000,
                   "ebsVolumeType": "PROVISIONED",
-                  "instanceSize": "M30"
+                  "instanceSize": "%s"
                 }
               }
             ],
@@ -144,7 +144,7 @@ public class AtlasClusterManager {
           ]
     }
     """,
-            clusterName, diskSize, iops, diskType, tier);
+            clusterName, diskSize, iops, diskType, tier, tier);
     logger.info(payload);
     // It does not exist we need to create it
     if (isClusterReady == 404) {
