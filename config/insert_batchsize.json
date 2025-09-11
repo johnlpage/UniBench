@@ -1,0 +1,27 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.InsertTest",
+  "numberOfThreads": 48,
+  "database": "unibench",
+  "collection": "inserts",
+  "totalDocsToInsert": 6291456,
+  "docSizeKB": 4.0,
+  "variants": [
+    {
+      "writeBatchSize": 1
+    },
+    {
+      "writeBatchSize": 10
+    },
+    {
+      "writeBatchSize": 100
+    },
+    {
+      "writeBatchSize": 1000
+    },
+    {
+      "writeBatchSize": 2000
+    }
+  ],
+  "warmup": false
+}
+

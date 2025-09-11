@@ -1,0 +1,35 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.InsertTest",
+  "numberOfThreads": 10,
+  "database": "unibench",
+  "collection": "inserts",
+  "variants": [
+    {
+      "docSizeKB": 1.0,
+      "totalDocsToInsert": 25165824,
+      "writeBatchSize": 4000
+    },
+    {
+      "docSizeKB": 4.0,
+      "totalDocsToInsert": 6291456,
+      "writeBatchSize": 1000
+    },
+    {
+      "docSizeKB": 32.0,
+      "totalDocsToInsert": 786432,
+      "writeBatchSize": 125
+    },
+    {
+      "docSizeKB": 256.0,
+      "totalDocsToInsert": 98304,
+      "writeBatchSize": 16
+    },
+    {
+      "docSizeKB": 2048.0,
+      "totalDocsToInsert": 12288,
+      "writeBatchSize": 2
+    }
+  ],
+  "warmup": false
+}
+

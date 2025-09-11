@@ -1,0 +1,41 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.InsertTest",
+  "numberOfThreads": 10,
+  "database": "unibench",
+  "collection": "inserts",
+  "docSizeKB": 4.0,
+  "initialDocsToInsert": 3000000,
+  "totalDocsToInsert": 3291456,
+  "writeBatchSize": 1000,
+  "variants": [
+    {
+      "instance": {
+        "atlasInstanceType": "M30",
+        "atlasDiskType": "STANDARD",
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 60
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M30",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 60
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M30",
+        "atlasDiskType": "STANDARD",
+        "atlasIOPS": 6000,
+        "atlasDiskSizeGB": 2048
+      },
+      "nSecondaryIndexes": 4
+    }
+  ],
+  "warmup": false
+}
+

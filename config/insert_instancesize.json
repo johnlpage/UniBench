@@ -1,0 +1,68 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.InsertTest",
+  "numberOfThreads": 24,
+  "database": "unibench",
+  "collection": "inserts",
+  "docSizeKB": 4.0,
+  "initialDocsToInsert": 3000000,
+  "totalDocsToInsert": 3291456,
+  "writeBatchSize": 1000,
+  "variants": [
+    {
+      "instance": {
+        "atlasInstanceType": "M30",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M50",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M60",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M80",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M100",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 250
+      },
+      "nSecondaryIndexes": 4
+    }
+  ],
+  "warmup": false
+}
+

@@ -1,0 +1,12 @@
+target/*
+# IntelliJ run/debug configs  
+.idea/runConfigurations/  
+.idea/workspace.xml  
+.run/  
+.env
+
+
+reporting/node_modules/
+reporting/package-lock.json
+
+
