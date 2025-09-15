@@ -307,6 +307,39 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 | STANDARD (60GB@3000IOPS) | 92 | 0 | 6181 | 102807 | 9366 | 254 | 47 | 0 |
   
 
+## Impact of Instance Size on write performance
+
+### Description
+
+This test compares the performance increasing Atlas instance sizes on performace
+in an insert-with-secondary-indexes workload. The test inserts 3M x 4KB
+documents with 4 secondary indexes, then measures the time to add 3M documnts.
+As the instance size increases, both the CPU and RAM increase as we are not
+using any low-cpu instances at this time. From M30 to M40 the cache increases
+from 2GB to 8GB as the RAM goes from 8GB to 16GB.
+
+In these tests we are using 2000 provisioned IOPS.
+
+| Instance Type | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+| --: | --: | --: | --: | --: | --: |
+| M30 | 768 | 12857 | 4288 | 17.15 | 5451 |
+| M40 | 141 | 12857 | 23293 | 93.17 | 629 |
+| M50 | 80 | 12857 | 40975 | 163.9 |  |
+| M60 | 57 | 12857 | 57492 | 229.97 |  |
+| M80 | 44 | 12857 | 74382 | 297.53 |  |
+  
+
+### Resource Usage
+
+| Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| M30 | 91 | 0 | 5983 | 103096 | 10159 | 287 | 52 | 0 |
+| M40 | 47 | 0 | 5537 | 195475 | 55190 | 1982 | 209 | 0 |
+| M50 | 0 |  | 4316 | 276565 | 97087 |  |  |  |
+| M60 | 0 |  | 4854 | 361224 | 136219 |  |  |  |
+| M80 |  |  | 2204 | 478539 | 176239 |  |  |  |
+  
+
 ## To Add
 
 * Ingesting data

@@ -5,7 +5,7 @@
   "collection": "inserts",
   "docSizeKB": 4.0,
   "initialDocsToInsert": 3000000,
-  "totalDocsToInsert": 3291456,
+  "totalDocsToInsert": 12000000,
   "writeBatchSize": 1000,
   "variants": [
     {

@@ -3,7 +3,7 @@
   "tests": [
     "config/insert_instancesize.json"
   ],
-  "atlasInstanceType": "M30",
+  "atlasInstanceType": "M40",
   "atlasDiskType": "PROVISIONED",
   "atlasIOPS": 2000,
   "atlasDiskSizeGB": 250
