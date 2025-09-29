@@ -3,7 +3,7 @@
   "tests": [
     "config/concurrency.json"
   ],
-  "atlasInstanceType": null,
+  "atlasInstanceType": "M30",
   "atlasDiskType": "PROVISIONED",
   "atlasIOPS": 2000,
   "atlasDiskSizeGB": 250

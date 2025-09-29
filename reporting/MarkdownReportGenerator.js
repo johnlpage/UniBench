@@ -19,7 +19,8 @@ class MarkdownReportGenerator {
         let markdown = await fs.readFile(templatePath, 'utf8');
 
         // Replace
-        // data placeholders
+        // data pla
+        // ceholders
         markdown = await this.replaceTablePlaceholders(markdown);
         markdown = await this.replaceChartPlaceholders(markdown);
 
