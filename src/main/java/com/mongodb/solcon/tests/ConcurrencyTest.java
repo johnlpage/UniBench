@@ -58,9 +58,9 @@ public class ConcurrencyTest extends BaseMongoTest {
     for (int i = 0; i < nHotSpots; i++) {
       hotSpotArray[i] = (int) (initialDocsToInsert * (i / (double) nHotSpots));
     }
-    int nQueries = testConfig.getInteger("nQueries", 100000);
-    int nQueriesPerThread = Math.toIntExact(nQueries / nThreads);
-    for (int i = 0; i < nQueriesPerThread; i++) {
+    int nUpdates = testConfig.getInteger("nUpdates", 100000);
+    int nUpdatesPerThread = Math.toIntExact(nUpdates / nThreads);
+    for (int i = 0; i < nUpdatesPerThread; i++) {
       int hotSpotId = hotSpotArray[RandomUtils.nextInt(0, nHotSpots)];
       collection.updateOne(Filters.eq("_id", hotSpotId), Updates.inc("count", 1));
     }
