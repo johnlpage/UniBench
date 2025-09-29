@@ -52,15 +52,6 @@
         "atlasDiskSizeGB": 250
       },
       "nSecondaryIndexes": 4
-    },
-    {
-      "instance": {
-        "atlasInstanceType": "M100",
-        "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
-      },
-      "nSecondaryIndexes": 4
     }
   ],
   "warmup": false

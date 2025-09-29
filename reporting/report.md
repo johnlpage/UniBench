@@ -74,9 +74,9 @@ logging use cases.
 
 | Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
 | --: | --: | --: | --: | --: |
-| 1 | 448 | 24576 | 56115 | 56.12 |
-| 4 | 374 | 24576 | 16808 | 67.23 |
-| 32 | 363 | 24576 | 2169 | 69.4 |
+| 1 | 411 | 24576 | 61248 | 61.25 |
+| 4 | 351 | 24576 | 17929 | 71.72 |
+| 32 | 322 | 24576 | 2442 | 78.15 |
 | 256 | 333 | 24576 | 295 | 75.52 |
 | 2048 | 321 | 24576 | 38 | 78.49 |
   
@@ -85,9 +85,9 @@ logging use cases.
 
 | Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 72 | 4 | 39 | 72761 | 34643 | 466 | 102 | 1 |
-| 4 | 64 | 8 | 37 | 84520 | 39824 | 536 | 119 | 1 |
-| 32 | 64 | 9 | 42 | 83136 | 39721 | 535 | 117 | 1 |
+| 1 | 73 | 0 | 27 | 79199 | 37811 | 508 | 113 | 0 |
+| 4 | 70 | 0 | 37 | 90122 | 42479 | 576 | 126 | 0 |
+| 32 | 66 | 0 | 36 | 93548 | 44725 | 610 | 133 | 0 |
 | 256 | 62 | 11 | 32 | 85306 | 41978 | 556 | 121 | 1 |
 | 2048 | 60 | 15 | 10 | 86993 | 42083 | 559 | 119 | 6 |
   
@@ -311,33 +311,87 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 
 ### Description
 
-This test compares the performance increasing Atlas instance sizes on performace
+This test compares the performance increasing Atlas instance sizes on
+performance
 in an insert-with-secondary-indexes workload. The test inserts 3M x 4KB
-documents with 4 secondary indexes, then measures the time to add 3M documnts.
+documents with 4 secondary indexes, then measures the time to add 3M documents.
 As the instance size increases, both the CPU and RAM increase as we are not
 using any low-cpu instances at this time. From M30 to M40 the cache increases
 from 2GB to 8GB as the RAM goes from 8GB to 16GB.
 
 In these tests we are using 2000 provisioned IOPS.
 
+### Performance
+
 | Instance Type | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| M30 | 768 | 12857 | 4288 | 17.15 | 5451 |
-| M40 | 141 | 12857 | 23293 | 93.17 | 629 |
-| M50 | 80 | 12857 | 40975 | 163.9 |  |
-| M60 | 57 | 12857 | 57492 | 229.97 |  |
-| M80 | 44 | 12857 | 74382 | 297.53 |  |
+| M30 | 5088 | 46875 | 2358 | 9.43 | 10806 |
+| M40 | 703 | 46875 | 17072 | 68.29 | 1292 |
+| M50 | 432 | 46875 | 27772 | 111.09 | 778 |
+| M60 | 362 | 46875 | 33182 | 132.73 | 622 |
+| M80 | 239 | 46875 | 50275 | 201.1 | 297 |
   
 
 ### Resource Usage
 
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| M30 | 91 | 0 | 5983 | 103096 | 10159 | 287 | 52 | 0 |
-| M40 | 47 | 0 | 5537 | 195475 | 55190 | 1982 | 209 | 0 |
-| M50 | 0 |  | 4316 | 276565 | 97087 |  |  |  |
-| M60 | 0 |  | 4854 | 361224 | 136219 |  |  |  |
-| M80 |  |  | 2204 | 478539 | 176239 |  |  |  |
+| M30 | 92 | 0 | 5133 | 87797 | 5588 | 409 | 47 | 0 |
+| M40 | 87 | 0 | 7815 | 193188 | 40449 | 2436 | 197 | 1 |
+| M50 | 40 | 17 | 6144 | 218253 | 65804 | 2881 | 249 | 0 |
+| M60 | 23 | 11 | 4840 | 288562 | 78621 | 3157 | 284 | 0 |
+| M80 | 13 | 7 | 4125 | 349582 | 119119 | 2554 | 350 | 0 |
+  
+
+## Impact of hot documents and concurrency on write performance
+
+### Description
+
+Where many threads simultaneously modify the same document - the internal
+optimistic-with-retry
+concurrency in MongoDB means that N simultanous updates result in N^2/2 quantity
+of work; this test measures the
+real world impact of this. This is primarily related to RAM and CPU usage so we
+can use a relatively small data set
+with 1 Million 1KB documents. We are only modifying a small number of them
+anyway.
+We first insert 1 million 1KB documents, then update one of them with a varying
+number of threads, per perform
+
+### Performance
+
+| Num Threads | Updating Index | writeConflicts | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
+| --: | --: | --: | --: | --: | --: |
+| 10 |  | 8994 | 260 | 3841 | 1.71 |
+| 20 |  | 18423 | 132 | 7549 | 2.03 |
+| 50 |  | 52346 | 65 | 15293 |  |
+| 100 |  | 67109 | 45 | 22159 |  |
+| 200 |  | 73644 | 48 | 20809 |  |
+| 400 |  | 75026 | 47 | 21056 |  |
+| 10 | true | 22945 | 264 | 3794 | 1.95 |
+| 20 | true | 32979 | 137 | 7301 | 2.38 |
+| 50 | true | 67215 | 68 | 14763 |  |
+| 100 | true | 80768 | 47 | 21061 |  |
+| 200 | true | 89893 | 51 | 19801 |  |
+| 400 | true | 94859 | 50 | 20156 |  |
+  
+
+### Resource Usage
+
+| Num Threads | Updating Index | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
+| 10 |  | 7 | 0 | 77 | 0 | 394 | 2 | 0 |
+| 20 |  | 9 | 0 | 130 | 0 | 622 | 3 | 0 |
+| 50 |  |  | 1 | 260 | 0 |  |  |  |
+| 100 |  |  | 3 | 429 | 0 |  |  |  |
+| 200 |  |  | 6 | 464 | 0 |  |  |  |
+| 400 |  |  | 5 | 547 | 0 |  |  |  |
+| 10 | true | 5 | 3 | 161 | 0 | 327 | 1 | 0 |
+| 20 | true | 6 | 0 | 220 | 0 | 500 | 2 | 0 |
+| 50 | true |  | 3 | 286 | 0 |  |  |  |
+| 100 | true |  | 3 | 533 | 0 |  |  |  |
+| 200 | true |  | 2 | 384 | 0 |  |  |  |
+| 400 | true |  | 3 | 491 | 0 |  |  |  |
   
 
 ## To Add
@@ -347,23 +401,24 @@ In these tests we are using 2000 provisioned IOPS.
     * ~~Batching vis Single Insert~~
     * ~~ObjectId vs BusinessID vs UUID~~
     * ~~number of indexes and cache~~
-    * Iops (Provisioned vi Standard)
-    * Instance sizes
-* Replacing Data
+    * ~~Iops (Provisioned vi Standard)~~
+    * ~~Instance sizes~~
+
+* Reading Data
+    * Retrieval single By Key
+    * Retrieval set By Single Key
+    * Retrieval page N
+    * Retrieval next page
+    * Retrieval part index
+    * Retrieval $in
+    * Retrieval out of cache
+* Replacing Data~~
     * Replace
     * Replace and cache
     * Updates
     * Replace
     * Update
     * Impacted indexes
-* Reading Data
-    * Retrieval single
-    * Retrieval set
-    * Retrieval page N
-    * Retrieval next page
-    * Retrieval part index
-    * Retrieval $in
-    * Retrieval out of cache
 * Aggregation
     * Aggregation group
     * Aggregation ¢lookup

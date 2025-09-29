@@ -20,10 +20,10 @@ public class BenchmarkController {
   MongoClient mongoClient;
   Document bmConfig;
   AtlasClusterManager atlasClusterManager;
+  boolean isCloudAtlas;
 
   BenchmarkController() {
     resultRecorder = new ResultRecorder();
-    atlasClusterManager = new AtlasClusterManager();
   }
 
   void connectToMongoDB() {
@@ -51,11 +51,15 @@ public class BenchmarkController {
 
     /* Ensure we have a cluster to test with */
     String atlasInstanceType = bmConfig.getString("atlasInstanceType");
+    isCloudAtlas = atlasInstanceType != null;
+    if (isCloudAtlas) {
+      atlasClusterManager = new AtlasClusterManager();
+    }
 
-    if (atlasInstanceType != null) {
+    if (isCloudAtlas) {
       try {
-        Integer iops = bmConfig.getInteger("atlasIOPS", 3000);
-        Integer disksize = bmConfig.getInteger("atlasDiskSizeGB", 60);
+        int iops = bmConfig.getInteger("atlasIOPS", 3000);
+        int disksize = bmConfig.getInteger("atlasDiskSizeGB", 60);
         String diskType = bmConfig.getString("atlasDiskType");
         if (diskType == null) {
           diskType = "STANDARD ";
@@ -68,15 +72,18 @@ public class BenchmarkController {
         System.exit(1);
       }
     }
-    // Test we have working metrics - might need access
+
     Instant startTime = Instant.now().minus(Duration.ofMinutes(10));
     Instant endTime = Instant.now();
-    try {
-      Document metrics =
-          atlasClusterManager.getClusterPrimaryMetrics(
-              testClusterName, startTime.toString(), endTime.toString());
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    if (isCloudAtlas) {
+      try {
+        // Test we have working metrics - might need access list modified
+
+        atlasClusterManager.getClusterPrimaryMetrics(
+            testClusterName, startTime.toString(), endTime.toString());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
     }
 
     /* Read in the top level config and execute all tests */
@@ -87,7 +94,7 @@ public class BenchmarkController {
       }
     }
     // Tear down at end of tests if specified - often this will be in own file
-    if (bmConfig.getBoolean("teardownAtlas", false)) {
+    if (isCloudAtlas && bmConfig.getBoolean("teardownAtlas", false)) {
       try {
         atlasClusterManager.deleteCluster(testClusterName);
         System.out.println("Deleted Cluster " + testClusterName);
@@ -138,12 +145,12 @@ public class BenchmarkController {
             variant); // Set the mode parameter to whatever mode we want - this cna be used to
         // set groups of parameters - like running against an empty or prepopulated collection
         logger.info("Running variant {}", variant.toJson());
-        if (variant.containsKey("instance")) {
+        if (isCloudAtlas && variant.containsKey("instance")) {
 
           Document instance = variant.get("instance", Document.class);
           String atlasInstanceType = instance.getString("atlasInstanceType");
-          Integer iops = instance.getInteger("atlasIOPS", 3000);
-          Integer disksize = instance.getInteger("atlasDiskSizeGB", 60);
+          int iops = instance.getInteger("atlasIOPS", 3000);
+          int disksize = instance.getInteger("atlasDiskSizeGB", 60);
           String diskType = instance.getString("atlasDiskType");
           if (diskType == null) {
             diskType = "STANDARD ";
@@ -151,9 +158,12 @@ public class BenchmarkController {
           atlasClusterManager.modifyCluster(
               testClusterName, atlasInstanceType, diskType, disksize, iops);
         }
-        /* Use this for any pre-run cleanup that's required */
-        test.TestReset();
+        /* We can change threads by variant */
 
+        test.TestReset();
+        if (variant.containsKey("numberOfThreads")) {
+          numberOfThreads = variant.getInteger("numberOfThreads");
+        }
         ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
         // If the test config defines a warmup routine, run the test once without measuring.
 
@@ -179,17 +189,28 @@ public class BenchmarkController {
         runTestsInParallel(testConfig, mongoClient, testClass, numberOfThreads, executorService);
         Instant endTime = Instant.now();
         long timeTaken = Duration.between(startTime, endTime).toMillis();
-
-        Document metrics =
-            atlasClusterManager.getClusterPrimaryMetrics(
-                testClusterName, startTime.toString(), endTime.toString());
-
-        statusAfter = mongoClient.getDatabase("admin").runCommand(new Document("serverStatus", 1));
         logger.info("Test Complete");
 
         logger.info("Time: {}s", timeTaken / 1000);
-        resultRecorder.recordResult(
-            bmConfig, testConfig, variant, statusBefore, statusAfter, metrics, startTime, endTime);
+        if (isCloudAtlas) {
+
+          Document metrics =
+              atlasClusterManager.getClusterPrimaryMetrics(
+                  testClusterName, startTime.toString(), endTime.toString());
+
+          statusAfter =
+              mongoClient.getDatabase("admin").runCommand(new Document("serverStatus", 1));
+
+          resultRecorder.recordResult(
+              bmConfig,
+              testConfig,
+              variant,
+              statusBefore,
+              statusAfter,
+              metrics,
+              startTime,
+              endTime);
+        }
       }
 
     } catch (Exception e) {

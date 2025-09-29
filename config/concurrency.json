@@ -1,0 +1,91 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.ConcurrencyTest",
+  "numberOfThreads": 10,
+  "database": "unibench",
+  "collection": "hotspot",
+  "initialDocsToInsert": 5000000,
+  "writeBatchSize": 1000,
+  "docSizeKB": 1.0,
+  "variants": [
+    {
+      "comment": "Single Hotspot, 10 Threads",
+      "numberOfThreads": 10,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 20 Threads",
+      "numberOfThreads": 20,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 50 Threads",
+      "numberOfThreads": 50,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 100 Threads",
+      "numberOfThreads": 100,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 200 Threads",
+      "numberOfThreads": 200,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 400 Threads",
+      "numberOfThreads": 400,
+      "nUpdates": 5000000,
+      "nHotspots": 1
+    },
+    {
+      "comment": "Single Hotspot, 10 Threads, index change ",
+      "numberOfThreads": 10,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    },
+    {
+      "comment": "Single Hotspot, 20 Threads, index change ",
+      "numberOfThreads": 20,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    },
+    {
+      "comment": "Single Hotspot, 50 Threads, index change ",
+      "numberOfThreads": 50,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    },
+    {
+      "comment": "Single Hotspot, 100 Threads, index change ",
+      "numberOfThreads": 100,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    },
+    {
+      "comment": "Single Hotspot, 200 Threads, index change ",
+      "numberOfThreads": 200,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    },
+    {
+      "comment": "Single Hotspot, 400 Threads, index change ",
+      "numberOfThreads": 400,
+      "nUpdates": 5000000,
+      "nHotspots": 1,
+      "indexUpdate": true
+    }
+  ],
+  "warmup": false
+}
+

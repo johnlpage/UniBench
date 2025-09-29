@@ -1,0 +1,30 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.QueryTest",
+  "numberOfThreads": 10,
+  "database": "unibench",
+  "collection": "query",
+  "initialDocsToInsert": 20000000,
+  "nGroups": 5000,
+  "writeBatchSize": 1000,
+  "docSizeKB": 4.0,
+  "variants": [
+    {
+      "comment": "In Cache",
+      "nQueries": 1000000,
+      "query": {
+        "seq": "RANDINT(1,100000)"
+      },
+      "limit": 1
+    },
+    {
+      "comment": "Out Of Cache",
+      "nQueries": 1000000,
+      "query": {
+        "seq": "RANDINT(1,20000000)"
+      },
+      "limit": 1
+    }
+  ],
+  "warmup": true
+}
+

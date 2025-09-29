@@ -118,8 +118,8 @@ public class AtlasClusterManager {
                 },
                 "analyticsSpecs": {
                   "nodeCount": 0,
-                  "diskIOPS": 2000,
-                  "ebsVolumeType": "PROVISIONED",
+                  "diskIOPS": 3000,
+                  "ebsVolumeType": "STANDARD",
                   "instanceSize": "M30"
                 },
                 "autoScaling": {
@@ -133,8 +133,8 @@ public class AtlasClusterManager {
                 },
                 "readOnlySpecs": {
                   "nodeCount": 0,
-                  "diskIOPS": 2000,
-                  "ebsVolumeType": "PROVISIONED",
+                  "diskIOPS": 3000,
+                  "ebsVolumeType": "STANDARD",
                   "instanceSize": "%s"
                 }
               }
@@ -145,7 +145,7 @@ public class AtlasClusterManager {
     }
     """,
             clusterName, diskSize, iops, diskType, tier, tier);
-    logger.info(payload);
+    logger.debug(payload);
     // It does not exist we need to create it
     if (isClusterReady == 404) {
       HttpPost request = new HttpPost(url);
@@ -262,6 +262,7 @@ public class AtlasClusterManager {
   public void blockUntilClusterReady(String clusterName, boolean state) throws Exception {
 
     int tries = 0;
+    boolean first = true;
     while (tries < 100) {
       tries++;
       int clusterReady = isClusterReady(clusterName);
@@ -273,8 +274,17 @@ public class AtlasClusterManager {
         logger.info("Cluster is now down: " + clusterName);
         return;
       }
-      logger.info("Waiting for cluster to be " + (state ? "ready" : "deleted") + "(" + tries + ")");
-      TimeUnit.SECONDS.sleep(30);
+      logger.info(
+          "Waiting for cluster to be {} (check {}) - current state:{}",
+          (state ? "ready" : "deleted"),
+          tries,
+          clusterReady);
+      if (first) {
+        TimeUnit.SECONDS.sleep(10);
+        first = false;
+      } else {
+        TimeUnit.SECONDS.sleep(30);
+      }
     }
     throw new RuntimeException("Timeout waiting for cluster to be ready.");
   }

@@ -1,11 +1,10 @@
 {
   "comment": "This is the top level config file",
   "tests": [
-    "config/insert_docsize.json",
-    "config/insert_batchsize.json"
+    "config/concurrency.json"
   ],
   "atlasInstanceType": "M30",
-  "atlasDiskType": "PROVISIONED",
+  "atlasDiskType": "STANDARD",
   "atlasIOPS": 3000,
   "atlasDiskSizeGB": 60
 }

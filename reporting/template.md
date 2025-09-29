@@ -551,14 +551,17 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 
 ### Description
 
-This test compares the performance increasing Atlas instance sizes on performace
+This test compares the performance increasing Atlas instance sizes on
+performance
 in an insert-with-secondary-indexes workload. The test inserts 3M x 4KB
-documents with 4 secondary indexes, then measures the time to add 3M documnts.
+documents with 4 secondary indexes, then measures the time to add 3M documents.
 As the instance size increases, both the CPU and RAM increase as we are not
 using any low-cpu instances at this time. From M30 to M40 the cache increases
 from 2GB to 8GB as the RAM goes from 8GB to 16GB.
 
 In these tests we are using 2000 provisioned IOPS.
+
+### Performance
 
 <!-- MONGO_TABLE: 
 {
@@ -629,6 +632,90 @@ In these tests we are using 2000 provisioned IOPS.
 }
 -->  
 
+## Impact of hot documents and concurrency on write performance
+
+### Description
+
+Where many threads simultaneously modify the same document - the internal
+optimistic-with-retry
+concurrency in MongoDB means that N simultanous updates result in N^2/2 quantity
+of work; this test measures the
+real world impact of this. This is primarily related to RAM and CPU usage so we
+can use a relatively small data set
+with 1 Million 1KB documents. We are only modifying a small number of them
+anyway.
+We first insert 1 million 1KB documents, then update one of them with a varying
+number of threads, per perform
+
+### Performance
+
+<!-- MONGO_TABLE: 
+
+{
+  "collection": "results",
+  "pipeline": [
+    { "$match": {"_id.testname" : "concurrency"}},
+    { "$set" : { "opTimeWrites": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "OP_EXECUTION_TIME_WRITES"]}}}}}},
+    { "$set" : { "opTimeWrites" : { "$filter": {  "input" : "$opTimeWrites.dataPoints", 
+                                                  "cond": { "$ne" : [ "$$this.value",null]}}}}},
+    { "$set" : { "opLatency" : {"$round": [{ "$avg" : "$opTimeWrites.value"},2]}}},
+    { "$set" : { "writeConflicts" : {"$subtract" : [ "$after_status.metrics.operation.writeConflicts", "$before_status.metrics.operation.writeConflicts"]}}},
+    { "$project": {"opLatency":1, "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate",
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0, "writeConflicts": 1,
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.nUpdates"]}, "$duration"]}]}
+     }},
+  {"$sort":{ "index": 1,"threads":1}}
+    ],
+  "columns": ["threads","index", "writeConflicts", "durationS","DocsPerSecond","opLatency"],
+  "headers": ["Num Threads", "Updating Index", "writeConflicts", "Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
+}
+-->  
+
+### Resource Usage
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "concurrency" }},
+    { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
+    { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
+    { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
+    { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
+    { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
+    { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
+    { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+    { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
+                                                                            "$before_status.wiredTiger.block-manager.bytes written"]}}},
+    { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
+    { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
+    { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+    { "$set" : { "journalPerSecondKB" :{"$round": { "$divide" : [ "$journalWrite", "$duration"]}}}},
+
+    {"$project": { "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate",
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
+                "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
+                "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
+        }
+    },
+    { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+  {"$sort":{ "index": 1,"threads":1}}],
+
+    "columns": ["threads","index","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite","meanRead" ],
+    "headers": ["Num Threads", "Updating Index", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
+}
+-->  
+
 ## To Add
 
 * Ingesting data
@@ -636,23 +723,24 @@ In these tests we are using 2000 provisioned IOPS.
     * ~~Batching vis Single Insert~~
     * ~~ObjectId vs BusinessID vs UUID~~
     * ~~number of indexes and cache~~
-    * Iops (Provisioned vi Standard)
-    * Instance sizes
-* Replacing Data
+    * ~~Iops (Provisioned vi Standard)~~
+    * ~~Instance sizes~~
+
+* Reading Data
+    * Retrieval single By Key
+    * Retrieval set By Single Key
+    * Retrieval page N
+    * Retrieval next page
+    * Retrieval part index
+    * Retrieval $in
+    * Retrieval out of cache
+* Replacing Data~~
     * Replace
     * Replace and cache
     * Updates
     * Replace
     * Update
     * Impacted indexes
-* Reading Data
-    * Retrieval single
-    * Retrieval set
-    * Retrieval page N
-    * Retrieval next page
-    * Retrieval part index
-    * Retrieval $in
-    * Retrieval out of cache
 * Aggregation
     * Aggregation group
     * Aggregation ¢lookup
