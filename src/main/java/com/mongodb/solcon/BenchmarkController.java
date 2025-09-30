@@ -52,7 +52,9 @@ public class BenchmarkController {
     /* Ensure we have a cluster to test with */
     String atlasInstanceType = bmConfig.getString("atlasInstanceType");
     isCloudAtlas = atlasInstanceType != null;
-    if (isCloudAtlas) {
+    boolean tearDownAtlas = bmConfig.getBoolean("teardownAtlas", false);
+
+    if (isCloudAtlas || tearDownAtlas) {
       atlasClusterManager = new AtlasClusterManager();
     }
 
@@ -94,7 +96,7 @@ public class BenchmarkController {
       }
     }
     // Tear down at end of tests if specified - often this will be in own file
-    if (bmConfig.getBoolean("teardownAtlas", false)) {
+    if (tearDownAtlas) {
       try {
         atlasClusterManager.deleteCluster(testClusterName);
         System.out.println("Deleted Cluster " + testClusterName);
