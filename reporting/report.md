@@ -410,14 +410,14 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 
 | Percent Inserts | Function | Using Upsert | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| 0 | UpdateOne | false | 165 | 3034 | 7.95 |
-| 0 | UpdateOne | true | 174 | 2868 | 8.02 |
-| 0 | FindOneAndUpdate | false | 195 | 2559 | 9.96 |
-| 0 | FindOneAndUpdate | true | 204 | 2448 | 10.45 |
-| 50 | UpdateOne | false | 193 | 2586 | 5.91 |
-| 50 | UpdateOne | true | 168 | 2972 | 7.97 |
-| 50 | FindOneAndUpdate | false | 1 | 625000 |  |
-| 50 | FindOneAndUpdate | true | 500 | 1000 | 4.66 |
+| 0 | UpdateOne | false | 167 | 3000 | 7.82 |
+| 0 | UpdateOne | true | 178 | 2810 | 8.27 |
+| 0 | FindOneAndUpdate | false | 196 | 2550 | 10.04 |
+| 0 | FindOneAndUpdate | true | 206 | 2429 | 10.65 |
+| 50 | UpdateOne | false | 200 | 2505 | 6.16 |
+| 50 | UpdateOne | true | 163 | 3061 | 7.6 |
+| 50 | FindOneAndUpdate | false | 214 | 2333 | 6.73 |
+| 50 | FindOneAndUpdate | true | 173 | 2883 | 8.33 |
   
 
 ## To Add
