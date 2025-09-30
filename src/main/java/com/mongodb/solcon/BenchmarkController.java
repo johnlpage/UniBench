@@ -232,7 +232,7 @@ public class BenchmarkController {
           InterruptedException {
 
     for (int threadNo = 0; threadNo < numberOfThreads; threadNo++) {
-      logger.info("Starting thread {}", threadNo);
+
       BaseMongoTest t =
           (BaseMongoTest)
               testClass.getDeclaredConstructors()[0].newInstance(
