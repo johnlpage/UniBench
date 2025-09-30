@@ -1,5 +1,4 @@
 {
   "comment": "This is the top level config file",
-  "teardownAtlas": true,
-  "atlasInstanceType": "ANY"
+  "teardownAtlas": true
 }

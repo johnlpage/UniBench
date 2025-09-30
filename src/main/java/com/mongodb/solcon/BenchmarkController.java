@@ -94,7 +94,7 @@ public class BenchmarkController {
       }
     }
     // Tear down at end of tests if specified - often this will be in own file
-    if (isCloudAtlas && bmConfig.getBoolean("teardownAtlas", false)) {
+    if (bmConfig.getBoolean("teardownAtlas", false)) {
       try {
         atlasClusterManager.deleteCluster(testClusterName);
         System.out.println("Deleted Cluster " + testClusterName);
