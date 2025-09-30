@@ -3,8 +3,8 @@
   "tests": [
     "config/updateapi.json"
   ],
-  "atlasInstanceType": "M30",
-  "atlasDiskType": "STANDARD",
-  "atlasIOPS": 3000,
-  "atlasDiskSizeGB": 60
+  "atlasInstanceType": null,
+  "atlasDiskType": "PROVISIONED",
+  "atlasIOPS": 2000,
+  "atlasDiskSizeGB": 250
 }

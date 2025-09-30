@@ -1,0 +1,69 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.UpdateApiTest",
+  "numberOfThreads": 10,
+  "database": "unibench",
+  "collection": "hotspot",
+  "initialDocsToInsert": 150000,
+  "writeBatchSize": 1000,
+  "docSizeKB": 1.0,
+  "variants": [
+    {
+      "updateFunction": "UpdateOne",
+      "upsert": false,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 0
+    },
+    {
+      "updateFunction": "UpdateOne",
+      "upsert": true,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 0
+    },
+    {
+      "updateFunction": "UpdateOne",
+      "upsert": false,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 50
+    },
+    {
+      "updateFunction": "UpdateOne",
+      "upsert": true,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 50
+    },
+    {
+      "updateFunction": "FindOneAndUpdate",
+      "upsert": false,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 0
+    },
+    {
+      "updateFunction": "FindOneAndUpdate",
+      "upsert": true,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 0
+    },
+    {
+      "updateFunction": "FindOneAndUpdate",
+      "upsert": false,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 50
+    },
+    {
+      "updateFunction": "FindOneAndUpdate",
+      "upsert": true,
+      "numberOfThreads": 10,
+      "nUpdates": 150000,
+      "percentNew": 50
+    }
+  ],
+  "warmup": false
+}
+
