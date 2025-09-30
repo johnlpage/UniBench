@@ -741,15 +741,15 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
                                                   "cond": { "$ne" : [ "$$this.value",null]}}}}},
     { "$set" : { "opLatency" : {"$round": [{ "$avg" : "$opTimeWrites.value"},2]}}},
 
-    { "$project": {"opLatency":1, "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate",
+    { "$project": {"opLatency":1, "function":"$variant.updateFunction","upsert":"$variant.upsert","percentnew":"$variant.percentNew",
                   "durationS": {"$round":{"$divide":[ "$duration",1000]}},
                   "_id": 0,
                   "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.nUpdates"]}, "$duration"]}]}
      }},
-  {"$sort":{ "index": 1,"threads":1}}
-    ],
-  "columns": ["threads","index", "writeConflicts", "durationS","DocsPerSecond","opLatency"],
-  "headers": ["Num Threads", "Updating Index", "writeConflicts", "Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
+  {"$sort":{ "percentnew": 1,"function":-1,"upsert":1}}
+  ],
+  "columns": ["percentnew","function","upsert", "durationS","DocsPerSecond","opLatency"],
+  "headers": ["Percent Inserts", "Function", "Using Upsert", "Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
 }
 -->  
 

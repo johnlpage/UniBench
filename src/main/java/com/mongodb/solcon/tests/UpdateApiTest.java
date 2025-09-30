@@ -110,7 +110,7 @@ public class UpdateApiTest extends BaseMongoTest {
 
       if (updateMode.equalsIgnoreCase("FindOneAndUpdate")) {
         FindOneAndUpdateOptions options =
-            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.BEFORE);
+            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
         if (useUpsert) {
           options.upsert(true);
         }

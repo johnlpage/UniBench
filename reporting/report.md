@@ -394,6 +394,32 @@ number of threads, per perform
 | 400 | true | 86 | 0 | 23 | 936 | 0.06 | 82 | 2 |
   
 
+## Comparison of using UpdateOne vs. FindOneAnd Update and upsert vs. insert
+
+### Description
+
+We add 500,000 1KB documents to a collection. Then we perform either a series of
+updates or a mix of updates and
+inserts where inserts are handled either by upsert or by a second call to insert
+when not found for update.
+
+We also try using both UpdateOne() and FindOneAndUpdate() to compare
+performance. In both cases 500,000 write ops are performed using 30 threads.
+
+### Performance
+
+| Percent Inserts | Function | Using Upsert | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
+| --: | --: | --: | --: | --: | --: |
+| 0 | UpdateOne | false | 165 | 3034 | 7.95 |
+| 0 | UpdateOne | true | 174 | 2868 | 8.02 |
+| 0 | FindOneAndUpdate | false | 195 | 2559 | 9.96 |
+| 0 | FindOneAndUpdate | true | 204 | 2448 | 10.45 |
+| 50 | UpdateOne | false | 193 | 2586 | 5.91 |
+| 50 | UpdateOne | true | 168 | 2972 | 7.97 |
+| 50 | FindOneAndUpdate | false | 1 | 622665 |  |
+| 50 | FindOneAndUpdate | true | 1 | 612745 |  |
+  
+
 ## To Add
 
 * Ingesting data
