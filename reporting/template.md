@@ -716,6 +716,43 @@ number of threads, per perform
 }
 -->  
 
+## Comparison of using UpdateOne vs. FindOneAnd Update and upsert vs. insert
+
+### Description
+
+We add 500,000 1KB documents to a collection. Then we perform either a series of
+updates or a mix of updates and
+inserts where inserts are handled either by upsert or by a second call to insert
+when not found for update.
+
+We also try using both UpdateOne() and FindOneAndUpdate() to compare
+performance. In both cases 500,000 write ops are performed using 30 threads.
+
+### Performance
+
+<!-- MONGO_TABLE: 
+
+{
+  "collection": "results",
+  "pipeline": [
+    { "$match": {"_id.testname" : "updateapi"}},
+    { "$set" : { "opTimeWrites": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "OP_EXECUTION_TIME_WRITES"]}}}}}},
+    { "$set" : { "opTimeWrites" : { "$filter": {  "input" : "$opTimeWrites.dataPoints", 
+                                                  "cond": { "$ne" : [ "$$this.value",null]}}}}},
+    { "$set" : { "opLatency" : {"$round": [{ "$avg" : "$opTimeWrites.value"},2]}}},
+
+    { "$project": {"opLatency":1, "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate",
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0,
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.nUpdates"]}, "$duration"]}]}
+     }},
+  {"$sort":{ "index": 1,"threads":1}}
+    ],
+  "columns": ["threads","index", "writeConflicts", "durationS","DocsPerSecond","opLatency"],
+  "headers": ["Num Threads", "Updating Index", "writeConflicts", "Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
+}
+-->  
+
 ## To Add
 
 * Ingesting data
