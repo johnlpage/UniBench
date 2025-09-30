@@ -78,7 +78,9 @@ public class UpdateApiTest extends BaseMongoTest {
           "nUpdatesPerThread (nupdates/nthreads) is greater than initialDocsToInsert - this is not allowed");
       return;
     }
-    for (int i = 0; i < nUpdatesPerThread; i++) {
+    // logger.info("Starting Update Test");
+    int i;
+    for (i = 0; i < nUpdatesPerThread; i++) {
 
       boolean isNew = (percentNew > 0) && (RandomUtils.nextInt(0, 100) < percentNew);
       int id;
@@ -106,9 +108,7 @@ public class UpdateApiTest extends BaseMongoTest {
           logger.debug("Falling back to manual insert for id {}", id);
           collection.insertOne(fullDoc); // The Non upsert Route
         }
-      }
-
-      if (updateMode.equalsIgnoreCase("FindOneAndUpdate")) {
+      } else if (updateMode.equalsIgnoreCase("FindOneAndUpdate")) {
         FindOneAndUpdateOptions options =
             new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
         if (useUpsert) {
@@ -119,13 +119,16 @@ public class UpdateApiTest extends BaseMongoTest {
                 Filters.eq("_id", id),
                 Updates.combine(Updates.inc("count", 1), Updates.setOnInsert(fullDoc)),
                 options);
-        logger.debug("Update Result {}", ur.toString());
+
         if (ur == null && useUpsert == false) {
           logger.debug("Falling back to manual insert for id {}", id);
           collection.insertOne(fullDoc); // The Non upsert Route
         }
+      } else {
+        logger.error("Unknown Update Mode {}", updateMode);
       }
     }
+    // logger.info("Finished Update Test completed {} updates", i);
   }
 
   // Reset is called for each variant

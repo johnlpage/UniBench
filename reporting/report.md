@@ -416,8 +416,8 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 | 0 | FindOneAndUpdate | true | 204 | 2448 | 10.45 |
 | 50 | UpdateOne | false | 193 | 2586 | 5.91 |
 | 50 | UpdateOne | true | 168 | 2972 | 7.97 |
-| 50 | FindOneAndUpdate | false | 1 | 622665 |  |
-| 50 | FindOneAndUpdate | true | 1 | 612745 |  |
+| 50 | FindOneAndUpdate | false | 1 | 625000 |  |
+| 50 | FindOneAndUpdate | true | 500 | 1000 | 4.66 |
   
 
 ## To Add
