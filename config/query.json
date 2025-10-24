@@ -3,7 +3,7 @@
   "numberOfThreads": 48,
   "database": "unibench",
   "collection": "query",
-  "initialDocsToInsert": 2000000,
+  "initialDocsToInsert": 5000000,
   "groupSize": 400,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,
@@ -11,7 +11,7 @@
   "variants": [
     {
       "comment": "One document indexed in cache",
-      "nQueries": 2000000,
+      "nQueries": 4000000,
       "query": {
         "_id": "RANDINT(1,10000)"
       },
@@ -19,15 +19,15 @@
     },
     {
       "comment": "One document indexed not in cache",
-      "nQueries": 300000,
+      "nQueries": 2000000,
       "query": {
-        "_id": "RANDINT(1,2000000)"
+        "_id": "RANDINT(1,5000000)"
       },
       "limit": 1
     },
     {
       "comment": "100 documents indexed in cache",
-      "nQueries": 100000,
+      "nQueries": 2000000,
       "query": {
         "group": "RANDINT(1,100)"
       },
@@ -37,7 +37,7 @@
       "comment": "100 document indexed not in cache",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,5000)"
+        "group": "RANDINT(1,12500)"
       },
       "limit": 100
     },
@@ -73,7 +73,7 @@
       "comment": "Page 1 of 20 outcache",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,5000)"
+        "group": "RANDINT(1,12500)"
       },
       "limit": 20
     },
@@ -81,7 +81,7 @@
       "comment": "Page 20 of 20 outcache with skip",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,5000)"
+        "group": "RANDINT(1,12500)"
       },
       "limit": 20,
       "skip": 380
@@ -90,7 +90,7 @@
       "comment": "Page 20 of 20 outcache with range",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,5000)",
+        "group": "RANDINT(1,12500)",
         "group_seq_i": {
           "$gte": 380
         }
@@ -101,7 +101,7 @@
       "comment": "Single field index but compound query",
       "nQueries": 1000,
       "query": {
-        "group": "RANDINT(1,5000)",
+        "group": "RANDINT(1,12500)",
         "group_seq": "RANDINT(1,400)"
       },
       "limit": 1
@@ -110,7 +110,7 @@
       "comment": "Compound index and compound query",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,5000)",
+        "group": "RANDINT(1,12500)",
         "group_seq_i": "RANDINT(1,400)"
       },
       "limit": 1
@@ -130,7 +130,7 @@
       "nQueries": 1000,
       "query": {
         "_id": {
-          "$in": "RANDINTLIST(1,2000000,100)"
+          "$in": "RANDINTLIST(1,5000000,100)"
         }
       },
       "limit": 100
