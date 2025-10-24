@@ -61,7 +61,7 @@ public class QueryTest extends BaseMongoTest {
     int limit = variant.getInteger("limit", 1);
     int skip = variant.getInteger("skip", 0);
     Document projection = variant.get("projection", Document.class);
-    if (projection != null) {
+    if (projection == null) {
       projection = new Document("_id", 0).append("nofieldsplease", 1);
     }
     Document queryTemplate = variant.get("query", Document.class);
