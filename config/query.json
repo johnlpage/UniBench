@@ -22,7 +22,7 @@
     },
     {
       "comment": "Page 1 of 20 outcache",
-      "nQueries": 5000,
+      "nQueries": 1500000,
       "query": {
         "group": "RANDINT(1,12500)"
       },
@@ -30,7 +30,7 @@
     },
     {
       "comment": "Page 20 of 20 outcache with skip",
-      "nQueries": 5000,
+      "nQueries": 1500000,
       "query": {
         "group": "RANDINT(1,12500)"
       },
@@ -39,7 +39,7 @@
     },
     {
       "comment": "Page 20 of 20 outcache with range",
-      "nQueries": 5000,
+      "nQueries": 1500000,
       "query": {
         "group": "RANDINT(1,12500)",
         "group_seq_i": {
@@ -50,7 +50,7 @@
     },
     {
       "comment": "Single field index but compound query",
-      "nQueries": 1000,
+      "nQueries": 20000,
       "query": {
         "group": "RANDINT(1,12500)",
         "group_seq": "RANDINT(1,400)"
@@ -59,7 +59,7 @@
     },
     {
       "comment": "Compound index and compound query",
-      "nQueries": 5000,
+      "nQueries": 500000,
       "query": {
         "group": "RANDINT(1,12500)",
         "group_seq_i": "RANDINT(1,400)"
@@ -68,7 +68,7 @@
     },
     {
       "comment": "Indexed 100 element $in clause in cache",
-      "nQueries": 1000,
+      "nQueries": 500000,
       "query": {
         "_id": {
           "$in": "RANDINTLIST(1,10000,100)"
@@ -78,7 +78,7 @@
     },
     {
       "comment": "Indexed 100 element $in clause not cache",
-      "nQueries": 1000,
+      "nQueries": 50000,
       "query": {
         "_id": {
           "$in": "RANDINTLIST(1,5000000,100)"
