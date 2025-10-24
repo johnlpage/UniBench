@@ -7,6 +7,9 @@ import com.mongodb.client.model.ReplaceOptions;
 import java.sql.Date;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -44,6 +47,37 @@ public class ResultRecorder {
     return doc != null ? (Document) doc.get(key) : null;
   }
 
+    public static Document prefixDollarKeys(Document original) {
+        Document transformed = new Document();
+
+        for (Map.Entry<String, Object> entry : original.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            String newKey = key.startsWith("$") ? "_" + key : key;
+            transformed.put(newKey, transformValue(value));
+        }
+
+        return transformed;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object transformValue(Object value) {
+        if (value instanceof Document) {
+            // Recurse for nested documents
+            return prefixDollarKeys((Document) value);
+        } else if (value instanceof List<?>) {
+            // Recurse for each element inside lists
+            List<Object> newList = new ArrayList<>();
+            for (Object item : (List<Object>) value) {
+                newList.add(transformValue(item));
+            }
+            return newList;
+        }
+        // Return primitives and other types unchanged
+        return value;
+    }
+
   // Very Generic
   protected void recordResult(
       Document benchConfig,
@@ -62,7 +96,7 @@ public class ResultRecorder {
     testRunInfo.put("start_time", Date.from(startTime));
     testRunInfo.put("end_time", Date.from(endTime));
     testRunInfo.put("duration", Duration.between(startTime, endTime).toMillis());
-    testRunInfo.put("variant", variant);
+    testRunInfo.put("variant", prefixDollarKeys(variant));
     testRunInfo.put("test_config", testConfig);
     testRunInfo.put("before_status", SanitiseStats(beforeStatus));
     testRunInfo.put("after_status", SanitiseStats(afterStatus));
@@ -83,7 +117,7 @@ public class ResultRecorder {
     collection.replaceOne(new Document("_id", id), testRunInfo, options);
   }
 
-  // $where breaks flex and free tier
+    // $where breaks flex and free tier
   Document SanitiseStats(Document stats) {
     // Usage Example
     Document metrics = safeGet(stats, "metrics");

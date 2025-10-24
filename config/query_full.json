@@ -10,6 +10,55 @@
   "warmup": true,
   "variants": [
     {
+      "comment": "One document indexed in cache",
+      "nQueries": 4000000,
+      "query": {
+        "_id": "RANDINT(1,10000)"
+      },
+      "limit": 1
+    },
+    {
+      "comment": "One document indexed not in cache",
+      "nQueries": 2000000,
+      "query": {
+        "_id": "RANDINT(1,5000000)"
+      },
+      "limit": 1
+    },
+    {
+      "comment": "100 documents indexed in cache",
+      "nQueries": 2000000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 document indexed not in cache",
+      "nQueries": 5000,
+      "query": {
+        "group": "RANDINT(1,12500)"
+      },
+      "limit": 100
+    },
+    {
+      "comment": "Page 1 of 20 incache",
+      "nQueries": 500000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 20
+    },
+    {
+      "comment": "Page 20 of 20 incache with skip",
+      "nQueries": 500000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 20,
+      "skip": 380
+    },
+    {
       "comment": "Page 20 of 20 incache with range",
       "nQueries": 100000,
       "query": {
