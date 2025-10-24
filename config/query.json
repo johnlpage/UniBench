@@ -1,6 +1,6 @@
 {
   "testClassName": "com.mongodb.solcon.tests.QueryTest",
-  "numberOfThreads": 10,
+  "numberOfThreads": 100,
   "database": "unibench",
   "collection": "query",
   "initialDocsToInsert": 2000000,
