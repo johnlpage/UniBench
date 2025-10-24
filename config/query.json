@@ -3,28 +3,138 @@
   "numberOfThreads": 10,
   "database": "unibench",
   "collection": "query",
-  "initialDocsToInsert": 20000000,
-  "nGroups": 5000,
+  "initialDocsToInsert": 2000000,
+  "groupSize": 400,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,
+  "warmup": true,
   "variants": [
     {
-      "comment": "In Cache",
-      "nQueries": 1000000,
+      "comment": "One document indexed in cache",
+      "nQueries": 20000000,
       "query": {
-        "seq": "RANDINT(1,100000)"
+        "_id": "RANDINT(1,10000)"
       },
       "limit": 1
     },
     {
-      "comment": "Out Of Cache",
-      "nQueries": 1000000,
+      "comment": "One document indexed not in cache",
+      "nQueries": 3000000,
       "query": {
-        "seq": "RANDINT(1,20000000)"
+        "_id": "RANDINT(1,2000000)"
       },
       "limit": 1
+    },
+    {
+      "comment": "100 documents indexed in cache",
+      "nQueries": 1000000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 document indexed not in cache",
+      "nQueries": 50000,
+      "query": {
+        "group": "RANDINT(1,5000)"
+      },
+      "limit": 100
+    },
+    {
+      "comment": "Page 1 of 20 incache",
+      "nQueries": 5000000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 20
+    },
+    {
+      "comment": "Page 20 of 20 incache with skip",
+      "nQueries": 5000000,
+      "query": {
+        "group": "RANDINT(1,100)"
+      },
+      "limit": 20,
+      "skip": 380
+    },
+    {
+      "comment": "Page 20 of 20 incache with range",
+      "nQueries": 1000000,
+      "query": {
+        "group": "RANDINT(1,100)",
+        "group_seq_i": {
+          "$gte": 380
+        }
+      },
+      "limit": 20
+    },
+    {
+      "comment": "Page 1 of 20 outcache",
+      "nQueries": 50000,
+      "query": {
+        "group": "RANDINT(1,5000)"
+      },
+      "limit": 20
+    },
+    {
+      "comment": "Page 20 of 20 outcache with skip",
+      "nQueries": 50000,
+      "query": {
+        "group": "RANDINT(1,5000)"
+      },
+      "limit": 20,
+      "skip": 380
+    },
+    {
+      "comment": "Page 20 of 20 outcache with range",
+      "nQueries": 50000,
+      "query": {
+        "group": "RANDINT(1,5000)",
+        "group_seq_i": {
+          "$gte": 380
+        }
+      },
+      "limit": 20
+    },
+    {
+      "comment": "Single field index but compound query",
+      "nQueries": 10000,
+      "query": {
+        "group": "RANDINT(1,5000)",
+        "group_seq": "RANDINT(1,400)"
+      },
+      "limit": 1
+    },
+    {
+      "comment": "Compound index and compound query",
+      "nQueries": 50000,
+      "query": {
+        "group": "RANDINT(1,5000)",
+        "group_seq_i": "RANDINT(1,400)"
+      },
+      "limit": 1
+    },
+    {
+      "comment": "Indexed 100 element $in clause in cache",
+      "nQueries": 10000,
+      "query": {
+        "_id": {
+          "$in": "RANDINTLIST(1,10000,100)"
+        }
+      },
+      "limit": 100
+    },
+    {
+      "comment": "Indexed 100 element $in clause not cache",
+      "nQueries": 10000,
+      "query": {
+        "_id": {
+          "$in": "RANDINTLIST(1,2000000,100)"
+        }
+      },
+      "limit": 100
     }
-  ],
-  "warmup": true
+  ]
 }
 

@@ -764,13 +764,13 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
     * ~~Instance sizes~~
 
 * Reading Data
-    * Retrieval single By Key
-    * Retrieval set By Single Key
-    * Retrieval page N
-    * Retrieval next page
-    * Retrieval part index
-    * Retrieval $in
-    * Retrieval out of cache
+    * ~~Retrieval single By Key~~
+    * ~~Retrieval set By Single Key~~
+    * ~~Retrieval page N with skip~~
+    * Retrieval next page with range quey
+    * ~~Retrieval part index~~
+    * ~~Retrieval $in~~
+    * ~~Retrieval out of cache~~
 * Replacing Data~~
     * Replace
     * Replace and cache

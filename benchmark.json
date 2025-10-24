@@ -1,7 +1,7 @@
 {
   "comment": "This is the top level config file",
   "tests": [
-    "config/concurrency.json"
+    "config/query.json"
   ],
   "atlasInstanceType": "M30",
   "atlasDiskType": "STANDARD",

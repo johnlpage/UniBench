@@ -171,11 +171,8 @@ public class BenchmarkController {
 
         if (testConfig.getBoolean("warmup", true)) {
           logger.info("Test Warmup Run");
-          testConfig.put("warmup", true);
           runTestsInParallel(testConfig, mongoClient, testClass, numberOfThreads, executorService);
         }
-
-        testConfig.put("warmup", false);
 
         // Used to capture ServerStatus
         Document statusBefore;

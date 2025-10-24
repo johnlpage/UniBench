@@ -1,9 +1,9 @@
 {
   "comment": "This is the top level config file for testing/development",
   "tests": [
-    "config/updateapi.json"
+    "config/query.json"
   ],
-  "atlasInstanceType": "M30",
+  "atlasInstanceType": null,
   "atlasDiskType": "STANDARD",
   "atlasIOPS": 3000,
   "atlasDiskSizeGB": 60
