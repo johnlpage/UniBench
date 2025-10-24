@@ -47,36 +47,36 @@ public class ResultRecorder {
     return doc != null ? (Document) doc.get(key) : null;
   }
 
-    public static Document prefixDollarKeys(Document original) {
-        Document transformed = new Document();
+  public static Document prefixDollarKeys(Document original) {
+    Document transformed = new Document();
 
-        for (Map.Entry<String, Object> entry : original.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
+    for (Map.Entry<String, Object> entry : original.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
 
-            String newKey = key.startsWith("$") ? "_" + key : key;
-            transformed.put(newKey, transformValue(value));
-        }
-
-        return transformed;
+      String newKey = key.startsWith("$") ? "_" + key : key;
+      transformed.put(newKey, transformValue(value));
     }
 
-    @SuppressWarnings("unchecked")
-    private static Object transformValue(Object value) {
-        if (value instanceof Document) {
-            // Recurse for nested documents
-            return prefixDollarKeys((Document) value);
-        } else if (value instanceof List<?>) {
-            // Recurse for each element inside lists
-            List<Object> newList = new ArrayList<>();
-            for (Object item : (List<Object>) value) {
-                newList.add(transformValue(item));
-            }
-            return newList;
-        }
-        // Return primitives and other types unchanged
-        return value;
+    return transformed;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object transformValue(Object value) {
+    if (value instanceof Document) {
+      // Recurse for nested documents
+      return prefixDollarKeys((Document) value);
+    } else if (value instanceof List<?>) {
+      // Recurse for each element inside lists
+      List<Object> newList = new ArrayList<>();
+      for (Object item : (List<Object>) value) {
+        newList.add(transformValue(item));
+      }
+      return newList;
     }
+    // Return primitives and other types unchanged
+    return value;
+  }
 
   // Very Generic
   protected void recordResult(
@@ -108,7 +108,7 @@ public class ResultRecorder {
     MongoCollection<Document> historyCollection =
         mongoClient.getDatabase(databaseName).getCollection(historyCollectionName);
 
-    Document id = Document.parse(variant.toJson()); // Deep copy
+    Document id = prefixDollarKeys(Document.parse(variant.toJson())); // Deep copy
     id.put("testname", testConfig.getString("filename"));
     id = new Document(new TreeMap<>(id)); // Sort the fields
     historyCollection.insertOne(testRunInfo);
@@ -117,7 +117,7 @@ public class ResultRecorder {
     collection.replaceOne(new Document("_id", id), testRunInfo, options);
   }
 
-    // $where breaks flex and free tier
+  // $where breaks flex and free tier
   Document SanitiseStats(Document stats) {
     // Usage Example
     Document metrics = safeGet(stats, "metrics");
