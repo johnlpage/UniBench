@@ -1,6 +1,6 @@
 {
   "testClassName": "com.mongodb.solcon.tests.QueryTest",
-  "numberOfThreads": 100,
+  "numberOfThreads": 48,
   "database": "unibench",
   "collection": "query",
   "initialDocsToInsert": 2000000,
@@ -11,7 +11,7 @@
   "variants": [
     {
       "comment": "One document indexed in cache",
-      "nQueries": 20000000,
+      "nQueries": 2000000,
       "query": {
         "_id": "RANDINT(1,10000)"
       },
@@ -19,7 +19,7 @@
     },
     {
       "comment": "One document indexed not in cache",
-      "nQueries": 3000000,
+      "nQueries": 300000,
       "query": {
         "_id": "RANDINT(1,2000000)"
       },
@@ -27,7 +27,7 @@
     },
     {
       "comment": "100 documents indexed in cache",
-      "nQueries": 1000000,
+      "nQueries": 100000,
       "query": {
         "group": "RANDINT(1,100)"
       },
@@ -35,7 +35,7 @@
     },
     {
       "comment": "100 document indexed not in cache",
-      "nQueries": 50000,
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,5000)"
       },
@@ -43,7 +43,7 @@
     },
     {
       "comment": "Page 1 of 20 incache",
-      "nQueries": 5000000,
+      "nQueries": 500000,
       "query": {
         "group": "RANDINT(1,100)"
       },
@@ -51,7 +51,7 @@
     },
     {
       "comment": "Page 20 of 20 incache with skip",
-      "nQueries": 5000000,
+      "nQueries": 500000,
       "query": {
         "group": "RANDINT(1,100)"
       },
@@ -60,7 +60,7 @@
     },
     {
       "comment": "Page 20 of 20 incache with range",
-      "nQueries": 1000000,
+      "nQueries": 100000,
       "query": {
         "group": "RANDINT(1,100)",
         "group_seq_i": {
@@ -71,7 +71,7 @@
     },
     {
       "comment": "Page 1 of 20 outcache",
-      "nQueries": 50000,
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,5000)"
       },
@@ -79,7 +79,7 @@
     },
     {
       "comment": "Page 20 of 20 outcache with skip",
-      "nQueries": 50000,
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,5000)"
       },
@@ -88,7 +88,7 @@
     },
     {
       "comment": "Page 20 of 20 outcache with range",
-      "nQueries": 50000,
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,5000)",
         "group_seq_i": {
@@ -99,7 +99,7 @@
     },
     {
       "comment": "Single field index but compound query",
-      "nQueries": 10000,
+      "nQueries": 1000,
       "query": {
         "group": "RANDINT(1,5000)",
         "group_seq": "RANDINT(1,400)"
@@ -108,7 +108,7 @@
     },
     {
       "comment": "Compound index and compound query",
-      "nQueries": 50000,
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,5000)",
         "group_seq_i": "RANDINT(1,400)"
@@ -117,7 +117,7 @@
     },
     {
       "comment": "Indexed 100 element $in clause in cache",
-      "nQueries": 10000,
+      "nQueries": 1000,
       "query": {
         "_id": {
           "$in": "RANDINTLIST(1,10000,100)"
@@ -127,7 +127,7 @@
     },
     {
       "comment": "Indexed 100 element $in clause not cache",
-      "nQueries": 10000,
+      "nQueries": 1000,
       "query": {
         "_id": {
           "$in": "RANDINTLIST(1,2000000,100)"
