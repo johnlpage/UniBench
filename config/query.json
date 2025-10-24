@@ -11,7 +11,7 @@
   "variants": [
     {
       "comment": "Page 20 of 20 incache with range",
-      "nQueries": 100000,
+      "nQueries": 1500000,
       "query": {
         "group": "RANDINT(1,100)",
         "group_seq_i": {
