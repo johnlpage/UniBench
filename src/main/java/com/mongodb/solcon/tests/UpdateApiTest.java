@@ -9,6 +9,7 @@ import com.mongodb.solcon.BaseMongoTest;
 import com.mongodb.solcon.DocumentFactory;
 import com.mongodb.solcon.Utils;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.RandomUtils;
 import org.bson.*;
 import org.slf4j.Logger;
@@ -28,8 +29,8 @@ public class UpdateApiTest extends BaseMongoTest {
 
   int docsizeBytes = 2048;
 
-  public UpdateApiTest(MongoClient client, Document config, long nThreads, long threadNo) {
-    super(client, config, nThreads, threadNo);
+  public UpdateApiTest(MongoClient client, Document config, long nThreads, long threadNo, ConcurrentHashMap<String, Object> testReturnInfo) {
+    super(client, config, nThreads, threadNo,testReturnInfo);
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);

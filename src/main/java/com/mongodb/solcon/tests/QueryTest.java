@@ -8,6 +8,7 @@ import com.mongodb.solcon.BaseMongoTest;
 import com.mongodb.solcon.DocumentFactory;
 import com.mongodb.solcon.Utils;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import org.bson.*;
@@ -31,8 +32,13 @@ public class QueryTest extends BaseMongoTest {
   HashMap<Integer, Integer> map = new HashMap<>();
   int docsizeBytes = 2048;
 
-  public QueryTest(MongoClient client, Document config, long nThreads, long threadNo) {
-    super(client, config, nThreads, threadNo);
+  public QueryTest(
+      MongoClient client,
+      Document config,
+      long nThreads,
+      long threadNo,
+      ConcurrentHashMap<String, Object> testReturnInfo) {
+    super(client, config, nThreads, threadNo, testReturnInfo);
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
@@ -58,6 +64,14 @@ public class QueryTest extends BaseMongoTest {
     int nQueries = variant.getInteger("nQueries", 100000);
     int nQueriesPerThread = Math.toIntExact(nQueries / nThreads);
 
+    // If we define a Test wide or per variant time - then that overrides nQueries
+
+    int testTimeSecsGlobal = testConfig.getInteger("testTimeSecs", 0);
+    int testTimeSecsVariant = variant.getInteger("testTimeSecs", 0);
+    int testTimeSecs = testTimeSecsVariant > 0 ? testTimeSecsVariant : testTimeSecsGlobal;
+    if (testTimeSecs > 0 && threadNo == 0) {
+      logger.info("Test time is set to {} seconds", testTimeSecs);
+    }
     int limit = variant.getInteger("limit", 1);
     int skip = variant.getInteger("skip", 0);
     Document projection = variant.get("projection", Document.class);
@@ -80,11 +94,19 @@ public class QueryTest extends BaseMongoTest {
               .explain(ExplainVerbosity.EXECUTION_STATS);
       logger.info("Explain: {}", explain.toJson());
     }
-    // Let's grab an explain too
-
-    for (int i = 0; i < nQueriesPerThread; i++) {
+    if (testReturnInfo != null) {
+      testReturnInfo.put("nQueries", 0);
+    }
+    // If a Test Time is defined then this overrides nQueries
+    long startSecs = new Date().getTime();
+    int nQueriesRun;
+    for (nQueriesRun = 0; nQueriesRun < nQueriesPerThread || testTimeSecs > 0; nQueriesRun++) {
       newQuery = processDocument(queryTemplate);
+      long now = new Date().getTime();
+      if (testTimeSecs > 0 && (now - startSecs) / 1000 >= testTimeSecs) {
 
+        break;
+      }
       AtomicInteger totalLength = new AtomicInteger();
       AtomicInteger count = new AtomicInteger();
 
@@ -104,6 +126,12 @@ public class QueryTest extends BaseMongoTest {
             "Count {}  was not equal to limit {}: {}", count.get(), limit, newQuery.toJson());
         System.exit(1);
       }
+    }
+
+    if (testReturnInfo != null) {
+      Integer finalNQueriesRun = nQueriesRun;
+      testReturnInfo.compute(
+          "nQueries", (k, v) -> (v == null) ? finalNQueriesRun : (Integer) v + finalNQueriesRun);
     }
 
     if (threadNo == 0) {

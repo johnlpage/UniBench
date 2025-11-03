@@ -6,6 +6,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.solcon.BaseMongoTest;
 import com.mongodb.solcon.DocumentFactory;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bson.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +37,8 @@ public class InsertTest extends BaseMongoTest {
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
   /* We use this set of 3 fields repeated in our documents */
 
-  public InsertTest(MongoClient client, Document config, long nThreads, long threadNo) {
-    super(client, config, nThreads, threadNo);
+  public InsertTest(MongoClient client, Document config, long nThreads, long threadNo, ConcurrentHashMap<String, Object> testReturnInfo) {
+    super(client, config, nThreads, threadNo,testReturnInfo);
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);

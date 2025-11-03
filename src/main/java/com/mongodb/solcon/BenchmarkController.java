@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -132,7 +133,8 @@ public class BenchmarkController {
       testConfig.put("variant", new Document());
       BaseMongoTest test =
           (BaseMongoTest)
-              testClass.getDeclaredConstructors()[0].newInstance(mongoClient, testConfig, 0, 0);
+              testClass.getDeclaredConstructors()[0].newInstance(
+                  mongoClient, testConfig, 0, 0, null);
 
       // If data needs generated (or verified), do it in the test class here
       test.GenerateData();
@@ -171,9 +173,10 @@ public class BenchmarkController {
 
         if (testConfig.getBoolean("warmup", true)) {
           logger.info("Test Warmup Run");
-          runTestsInParallel(testConfig, mongoClient, testClass, numberOfThreads, executorService);
+          runTestsInParallel(
+              testConfig, mongoClient, testClass, numberOfThreads, executorService, null);
         }
-
+        ConcurrentHashMap<String, Object> testReturnInfo = new ConcurrentHashMap<>();
         // Used to capture ServerStatus
         Document statusBefore;
         Document statusAfter;
@@ -185,7 +188,9 @@ public class BenchmarkController {
 
         logger.info("Test Live Run {} threads", numberOfThreads);
         Instant startTime = Instant.now();
-        runTestsInParallel(testConfig, mongoClient, testClass, numberOfThreads, executorService);
+
+        runTestsInParallel(
+            testConfig, mongoClient, testClass, numberOfThreads, executorService, testReturnInfo);
         Instant endTime = Instant.now();
         long timeTaken = Duration.between(startTime, endTime).toMillis();
         logger.info("Test Complete");
@@ -203,6 +208,7 @@ public class BenchmarkController {
           resultRecorder.recordResult(
               bmConfig,
               testConfig,
+              testReturnInfo,
               variant,
               statusBefore,
               statusAfter,
@@ -224,7 +230,8 @@ public class BenchmarkController {
       MongoClient mongoClient,
       Class<BaseMongoTest> testClass,
       int numberOfThreads,
-      ExecutorService executorService)
+      ExecutorService executorService,
+      ConcurrentHashMap<String, Object> testReturnInfo)
       throws InstantiationException,
           IllegalAccessException,
           java.lang.reflect.InvocationTargetException,
@@ -235,7 +242,7 @@ public class BenchmarkController {
       BaseMongoTest t =
           (BaseMongoTest)
               testClass.getDeclaredConstructors()[0].newInstance(
-                  mongoClient, testConfig, numberOfThreads, threadNo);
+                  mongoClient, testConfig, numberOfThreads, threadNo, testReturnInfo);
 
       executorService.submit(t);
     }

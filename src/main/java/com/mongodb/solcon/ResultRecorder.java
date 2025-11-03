@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,7 @@ public class ResultRecorder {
   protected void recordResult(
       Document benchConfig,
       Document testConfig,
+      ConcurrentHashMap<String, Object> testReturnInfo,
       Document variant,
       Document beforeStatus,
       Document afterStatus,
@@ -101,6 +103,7 @@ public class ResultRecorder {
     testRunInfo.put("before_status", SanitiseStats(beforeStatus));
     testRunInfo.put("after_status", SanitiseStats(afterStatus));
     testRunInfo.put("metrics", metrics);
+    testRunInfo.put("testResults", testReturnInfo);
     testRunInfo.put("bench_config", benchConfig);
 
     MongoCollection<Document> collection =

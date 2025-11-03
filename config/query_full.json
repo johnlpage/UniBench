@@ -7,6 +7,7 @@
   "groupSize": 400,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,
+  "testTimeSecs": 300,
   "warmup": true,
   "variants": [
     {
