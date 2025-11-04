@@ -11,74 +11,13 @@
   "warmup": true,
   "variants": [
     {
-      "comment": "Page 20 of 20 incache with range",
-      "testTimeSecs": 300,
-      "query": {
-        "group": "RANDINT(1,100)",
-        "group_seq_i": {
-          "$gte": 380
-        }
-      },
-      "limit": 20
-    },
-    {
-      "comment": "Page 1 of 20 outcache",
-      "query": {
-        "group": "RANDINT(1,12500)"
-      },
-      "limit": 20
-    },
-    {
-      "comment": "Page 20 of 20 outcache with skip",
-      "query": {
-        "group": "RANDINT(1,12500)"
-      },
-      "limit": 20,
-      "skip": 380
-    },
-    {
-      "comment": "Page 20 of 20 outcache with range",
-      "query": {
-        "group": "RANDINT(1,12500)",
-        "group_seq_i": {
-          "$gte": 380
-        }
-      },
-      "limit": 20
-    },
-    {
-      "comment": "Single field index but compound query",
-      "query": {
-        "group": "RANDINT(1,12500)",
-        "group_seq": "RANDINT(1,400)"
-      },
-      "limit": 1
-    },
-    {
       "comment": "Compound index and compound query",
+      "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)",
         "group_seq_i": "RANDINT(1,400)"
       },
       "limit": 1
-    },
-    {
-      "comment": "Indexed 100 element $in clause in cache",
-      "query": {
-        "_id": {
-          "$in": "RANDINTLIST(1,10000,100)"
-        }
-      },
-      "limit": 100
-    },
-    {
-      "comment": "Indexed 100 element $in clause not cache",
-      "query": {
-        "_id": {
-          "$in": "RANDINTLIST(1,5000000,100)"
-        }
-      },
-      "limit": 100
     }
   ]
 }

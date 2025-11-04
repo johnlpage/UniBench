@@ -92,7 +92,10 @@ public class QueryTest extends BaseMongoTest {
               .skip(skip)
               .projection(projection)
               .explain(ExplainVerbosity.EXECUTION_STATS);
-      logger.info("Explain: {}", explain.toJson());
+      if (explain.toJson().contains("COLLSCAN")) {
+        logger.info("ALERT: **** COLLECTION SCAN IN TEST ****");
+      }
+      logger.debug("Explain: {}", explain.toJson());
     }
     if (testReturnInfo != null) {
       testReturnInfo.put("nQueries", 0);

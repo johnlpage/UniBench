@@ -11,7 +11,7 @@
   "warmup": true,
   "variants": [
     {
-      "comment": "One document indexed in cache",
+      "comment": "1 document, 1 term,  cached, indexed.",
       "nQueries": 4000000,
       "query": {
         "_id": "RANDINT(1,10000)"
@@ -19,7 +19,7 @@
       "limit": 1
     },
     {
-      "comment": "One document indexed not in cache",
+      "comment": "1 document, not cached, indexed.",
       "nQueries": 2000000,
       "query": {
         "_id": "RANDINT(1,5000000)"
@@ -27,7 +27,7 @@
       "limit": 1
     },
     {
-      "comment": "100 documents indexed in cache",
+      "comment": "100 documents,1 term, cached, indexed ",
       "nQueries": 2000000,
       "query": {
         "group": "RANDINT(1,100)"
@@ -35,7 +35,7 @@
       "limit": 100
     },
     {
-      "comment": "100 document indexed not in cache",
+      "comment": "100 documents, 1 term, not cached, indexed",
       "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)"
@@ -43,7 +43,7 @@
       "limit": 100
     },
     {
-      "comment": "Page 1 of 20 incache",
+      "comment": "20 Documents, 1 term, cached",
       "nQueries": 500000,
       "query": {
         "group": "RANDINT(1,100)"
@@ -51,7 +51,7 @@
       "limit": 20
     },
     {
-      "comment": "Page 20 of 20 incache with skip",
+      "comment": "20 Documents, 380 skipped, 1 term, cached",
       "nQueries": 500000,
       "query": {
         "group": "RANDINT(1,100)"
@@ -60,7 +60,7 @@
       "skip": 380
     },
     {
-      "comment": "Page 20 of 20 incache with range",
+      "comment": "20 documents, 380 range skipped, 1 term, cached",
       "nQueries": 100000,
       "query": {
         "group": "RANDINT(1,100)",
@@ -71,7 +71,7 @@
       "limit": 20
     },
     {
-      "comment": "Page 1 of 20 outcache",
+      "comment": "20 documents, 1 term, not cached",
       "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)"
@@ -79,7 +79,7 @@
       "limit": 20
     },
     {
-      "comment": "Page 20 of 20 outcache with skip",
+      "comment": "20 documents, 380 skipped, 1 term, not cached",
       "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)"
@@ -88,7 +88,7 @@
       "skip": 380
     },
     {
-      "comment": "Page 20 of 20 outcache with range",
+      "comment": "20 documents, 380 range skipped, 1 term, not cached",
       "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)",
@@ -99,7 +99,7 @@
       "limit": 20
     },
     {
-      "comment": "Single field index but compound query",
+      "comment": "1 Document, 2 terms, partial index, not cached",
       "nQueries": 1000,
       "query": {
         "group": "RANDINT(1,12500)",
@@ -108,7 +108,7 @@
       "limit": 1
     },
     {
-      "comment": "Compound index and compound query",
+      "comment": "1 Document, 2 terms, compound index,  cached",
       "nQueries": 5000,
       "query": {
         "group": "RANDINT(1,12500)",
@@ -117,7 +117,7 @@
       "limit": 1
     },
     {
-      "comment": "Indexed 100 element $in clause in cache",
+      "comment": "100 Documents, 100 Terms, indexed, cached",
       "nQueries": 1000,
       "query": {
         "_id": {
@@ -127,7 +127,7 @@
       "limit": 100
     },
     {
-      "comment": "Indexed 100 element $in clause not cache",
+      "comment": "100 Documents, 100 Terms, indexed, not cached",
       "nQueries": 1000,
       "query": {
         "_id": {

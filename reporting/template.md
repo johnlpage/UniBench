@@ -753,6 +753,63 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 }
 -->  
 
+## Comparison of various forms of querying
+
+<!-- MONGO_TABLE: 
+
+{
+  "collection": "results",
+  "pipeline": [
+    { "$match": {"_id.testname" : "query_full"}},
+    { "$project": { "comment":"$variant.comment",
+"nQueries" : "$testResults.nQueries",
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0,
+                  "qps" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$testResults.nQueries"]}, "$duration"]}]}
+     }},
+{ "$sort" : { "start_time":1}}
+  ],
+  "columns": ["comment","durationS","qps"],
+  "headers": ["Test", "Time Taken (s)", "Speed (Queries/s)"]
+}
+-->  
+
+### Resource Usage
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "query_full" }},
+    { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
+    { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
+    { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
+    { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
+    { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
+    { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
+    { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+    { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
+    { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+
+    {"$project": {
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
+                "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
+                "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
+        }
+    },
+  {"$sort":{ "start_time": 1}}],
+
+    "columns": ["commenbt","meancpu","iowait","cachePageReadPerSecondKB","meanIops","meanRead" ],
+    "headers": ["Query Type", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
+}
+-->  
+
 ## To Add
 
 * Ingesting data

@@ -420,6 +420,46 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 | 50 | FindOneAndUpdate | true | 173 | 2883 | 8.33 |
   
 
+## Comparison of various forms of querying
+
+| Test | Time Taken (s) | Speed (Queries/s) |
+| --: | --: | --: |
+| One document indexed in cache | 301 | 11526 |
+| One document indexed not in cache | 301 | 4689 |
+| 100 documents indexed in cache | 301 | 1830 |
+| 100 document indexed not in cache | 301 | 357 |
+| Page 1 of 20 incache | 301 | 4553 |
+| Page 20 of 20 incache with skip | 301 | 3219 |
+| Page 20 of 20 incache with range | 301 | 4648 |
+| Page 1 of 20 outcache | 301 | 4536 |
+| Page 20 of 20 outcache with skip | 301 | 3047 |
+| Page 20 of 20 outcache with range | 301 | 4273 |
+| Single field index but compound query | 302 | 27 |
+| Compound index and compound query | 5741 | 44 |
+| Indexed 100 element $in clause in cache | 301 | 1565 |
+| Indexed 100 element $in clause not cache | 301 | 46 |
+  
+
+### Resource Usage
+
+| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+| --: | --: | --: | --: | --: | --: | --: |
+|  | 75 | 0 | 1 | 7 | 0 |
+|  | 53 | 29 | 4658 | 3535 | 120 |
+|  | 79 | 0 | 1 | 5 | 0 |
+|  | 80 | 0 | 24748 | 185 | 0 |
+|  | 77 | 0 | 1 | 7 | 0 |
+|  | 78 | 0 | 1 | 5 | 0 |
+|  | 77 | 0 | 1 | 5 | 0 |
+|  | 77 | 0 | 2 | 5 | 0 |
+|  | 78 | 0 | 2 | 6 | 0 |
+|  | 72 | 0 | 2 | 6 | 0 |
+|  | 26 | 65 | 4932 | 3550 | 110 |
+|  | 8 | 1 | 286 | 190 | 6 |
+|  | 78 | 0 | 1 | 4 | 0 |
+|  | 28 | 62 | 4366 | 3509 | 115 |
+  
+
 ## To Add
 
 * Ingesting data
@@ -431,13 +471,13 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
     * ~~Instance sizes~~
 
 * Reading Data
-    * Retrieval single By Key
-    * Retrieval set By Single Key
-    * Retrieval page N
-    * Retrieval next page
-    * Retrieval part index
-    * Retrieval $in
-    * Retrieval out of cache
+    * ~~Retrieval single By Key~~
+    * ~~Retrieval set By Single Key~~
+    * ~~Retrieval page N with skip~~
+    * Retrieval next page with range quey
+    * ~~Retrieval part index~~
+    * ~~Retrieval $in~~
+    * ~~Retrieval out of cache~~
 * Replacing Data~~
     * Replace
     * Replace and cache
