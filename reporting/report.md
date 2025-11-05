@@ -420,44 +420,64 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 | 50 | FindOneAndUpdate | true | 173 | 2883 | 8.33 |
   
 
-## Comparison of various forms of querying
+## High level comparison fo querying
 
-| Test | Time Taken (s) | Speed (Queries/s) |
+### Description
+
+This looks at a high level at various forms of simple indexed querying including
+those with an imperfect index. The test inserts 5,000,000 4KB Documents, These
+are divided into 12,500 groups with the field 'group' having an integer group
+id. There are 400 documents in each group. The documents in a group are not
+contiguous in the database, as we would not expect them to be in an unclustered
+collection.
+
+Tests run on the whole data set and on a subset to show cached and uncached
+results. Tests may fetch a single document, a set from the saem group or a
+single document from many different groups.
+
+Within the group the field group_seq has a value 0–400 allowing us to fetch a
+specific group and sequence number to investigate compound indexing. The field
+group_seq_i is the same as group_seq but indexed.
+
+We only retrieve the _id for each document to avoid measuring network cost or
+being limited by it.
+
+### Performance
+
+| Query Type | Time Taken (s) | Speed (Queries/s) |
 | --: | --: | --: |
-| One document indexed in cache | 301 | 11526 |
-| One document indexed not in cache | 301 | 4689 |
-| 100 documents indexed in cache | 301 | 1830 |
-| 100 document indexed not in cache | 301 | 357 |
-| Page 1 of 20 incache | 301 | 4553 |
-| Page 20 of 20 incache with skip | 301 | 3219 |
-| Page 20 of 20 incache with range | 301 | 4648 |
-| Page 1 of 20 outcache | 301 | 4536 |
-| Page 20 of 20 outcache with skip | 301 | 3047 |
-| Page 20 of 20 outcache with range | 301 | 4273 |
-| Single field index but compound query | 302 | 27 |
-| Compound index and compound query | 5741 | 44 |
-| Indexed 100 element $in clause in cache | 301 | 1565 |
-| Indexed 100 element $in clause not cache | 301 | 46 |
+| 1 document, 1 term,  cached, indexed. | 301 | 11104 |
+| 1 document, not cached, indexed. | 301 | 4661 |
+| 100 documents,1 term, cached, indexed  | 301 | 1781 |
+| 100 documents, 1 term, not cached, indexed | 301 | 342 |
+| 20 Documents, 1 term, cached | 301 | 4514 |
+| 20 Documents, 380 skipped, 1 term, cached | 301 | 3057 |
+| 20 documents, 380 range skipped, 1 term, cached | 301 | 4429 |
+| 20 documents, 1 term, not cached | 301 | 4361 |
+| 20 documents, 380 skipped, 1 term, not cached | 301 | 2982 |
+| 20 documents, 380 range skipped, 1 term, not cached | 301 | 4216 |
+| 1 Document, 2 terms, partial index, not cached | 302 | 27 |
+| 1 Document, 2 terms, compound index,  cached | 301 | 4725 |
+| 100 Documents, 100 Terms, indexed, cached | 301 | 1495 |
   
 
 ### Resource Usage
 
-| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: |
-|  | 75 | 0 | 1 | 7 | 0 |
-|  | 53 | 29 | 4658 | 3535 | 120 |
-|  | 79 | 0 | 1 | 5 | 0 |
-|  | 80 | 0 | 24748 | 185 | 0 |
-|  | 77 | 0 | 1 | 7 | 0 |
-|  | 78 | 0 | 1 | 5 | 0 |
-|  | 77 | 0 | 1 | 5 | 0 |
-|  | 77 | 0 | 2 | 5 | 0 |
-|  | 78 | 0 | 2 | 6 | 0 |
-|  | 72 | 0 | 2 | 6 | 0 |
-|  | 26 | 65 | 4932 | 3550 | 110 |
-|  | 8 | 1 | 286 | 190 | 6 |
-|  | 78 | 0 | 1 | 4 | 0 |
-|  | 28 | 62 | 4366 | 3509 | 115 |
+| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
+| --: | --: | --: | --: | --: |
+| 1 document, 1 term,  cached, indexed. | 75 | 0 | 0 | 4 |
+| 1 document, not cached, indexed. | 55 | 27 | 4719 | 3516 |
+| 100 documents,1 term, cached, indexed  | 79 | 0 | 1 | 5 |
+| 100 documents, 1 term, not cached, indexed | 79 | 0 | 23766 | 155 |
+| 20 Documents, 1 term, cached | 77 | 0 | 1 | 5 |
+| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 1 | 5 |
+| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 1 | 5 |
+| 20 documents, 1 term, not cached | 77 | 0 | 4 | 4 |
+| 20 documents, 380 skipped, 1 term, not cached | 78 | 0 | 1 | 5 |
+| 20 documents, 380 range skipped, 1 term, not cached | 77 | 0 | 1 | 5 |
+| 1 Document, 2 terms, partial index, not cached | 25 | 65 | 4954 | 3575 |
+| 1 Document, 2 terms, compound index,  cached | 75 | 3 | 4636 | 3569 |
+| 100 Documents, 100 Terms, indexed, cached | 78 | 0 | 1 | 5 |
   
 
 ## To Add

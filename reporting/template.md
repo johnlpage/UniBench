@@ -753,7 +753,29 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 }
 -->  
 
-## Comparison of various forms of querying
+## High level comparison fo querying
+
+### Description
+
+This looks at a high level at various forms of simple indexed querying including
+those with an imperfect index. The test inserts 5,000,000 4KB Documents, These
+are divided into 12,500 groups with the field 'group' having an integer group
+id. There are 400 documents in each group. The documents in a group are not
+contiguous in the database, as we would not expect them to be in an unclustered
+collection.
+
+Tests run on the whole data set and on a subset to show cached and uncached
+results. Tests may fetch a single document, a set from the saem group or a
+single document from many different groups.
+
+Within the group the field group_seq has a value 0–400 allowing us to fetch a
+specific group and sequence number to investigate compound indexing. The field
+group_seq_i is the same as group_seq but indexed.
+
+We only retrieve the _id for each document to avoid measuring network cost or
+being limited by it.
+
+### Performance
 
 <!-- MONGO_TABLE: 
 
@@ -770,7 +792,7 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 { "$sort" : { "start_time":1}}
   ],
   "columns": ["comment","durationS","qps"],
-  "headers": ["Test", "Time Taken (s)", "Speed (Queries/s)"]
+  "headers": ["Query Type", "Time Taken (s)", "Speed (Queries/s)"]
 }
 -->  
 
@@ -788,14 +810,20 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
     { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
     { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
     { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+    { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
+                                                                            "$before_status.wiredTiger.block-manager.bytes written"]}}},
+    { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
     { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
     { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
     { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
     { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
     { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
     { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+    { "$set" : { "journalPerSecondKB" :{"$round": [ { "$divide" : [ "$journalWrite", "$duration"]},2]}}},
 
-    {"$project": {
+    {"$project": { "comment":"$variant.comment", "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate","journalWrite":1,
                  "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
                 "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
                 "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
@@ -803,10 +831,12 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
                 "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
         }
     },
+    { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
   {"$sort":{ "start_time": 1}}],
 
-    "columns": ["commenbt","meancpu","iowait","cachePageReadPerSecondKB","meanIops","meanRead" ],
-    "headers": ["Query Type", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
+    "columns": ["comment","meancpu","iowait","cachePageReadPerSecondKB","meanIops"],
+    "headers": ["Query Type",  "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS"]
 }
 -->  
 
