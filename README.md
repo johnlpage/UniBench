@@ -1,4 +1,4 @@
-#        
+#             
 
 ## Introduction
 
@@ -12,6 +12,12 @@ the impact schema and indexing descisiona have on hardware requirements
 # To Setup an AWS Host as a Client
 
 * Launch instance at least as much CPU as database server
+
+```shell
+// Edit to put at LEAST your key in
+launchechec2.sh
+```
+
 * Build the test harness
 
 ```

@@ -72,25 +72,23 @@ logging use cases.
 
 ### Performance
 
-| Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
-| --: | --: | --: | --: | --: |
-| 1 | 411 | 24576 | 61248 | 61.25 |
-| 4 | 351 | 24576 | 17929 | 71.72 |
-| 32 | 322 | 24576 | 2442 | 78.15 |
-| 256 | 333 | 24576 | 295 | 75.52 |
-| 2048 | 321 | 24576 | 38 | 78.49 |
-  
+| Document Size (KB) | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
+|-------------------:|---------------:|-----------------:|---------------:|-------------:|
+|                  1 |            411 |            24576 |          61248 |        61.25 |
+|                  4 |            351 |            24576 |          17929 |        71.72 |
+|                 32 |            322 |            24576 |           2442 |        78.15 |
+|                256 |            333 |            24576 |            295 |        75.52 |
+|               2048 |            321 |            24576 |             38 |        78.49 |
 
 ### Resource Usage
 
 | Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 73 | 0 | 27 | 79199 | 37811 | 508 | 113 | 0 |
-| 4 | 70 | 0 | 37 | 90122 | 42479 | 576 | 126 | 0 |
-| 32 | 66 | 0 | 36 | 93548 | 44725 | 610 | 133 | 0 |
-| 256 | 62 | 11 | 32 | 85306 | 41978 | 556 | 121 | 1 |
-| 2048 | 60 | 15 | 10 | 86993 | 42083 | 559 | 119 | 6 |
-  
+|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                  1 |            73 |                        0 |                        27 |                   79199 |               37811 |      508 |              113 |               0 |
+|                  4 |            70 |                        0 |                        37 |                   90122 |               42479 |      576 |              126 |               0 |
+|                 32 |            66 |                        0 |                        36 |                   93548 |               44725 |      610 |              133 |               0 |
+|                256 |            62 |                       11 |                        32 |                   85306 |               41978 |      556 |              121 |               1 |
+|               2048 |            60 |                       15 |                        10 |                   86993 |               42083 |      559 |              119 |               6 |
 
 ### Analysis
 
@@ -131,25 +129,23 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
 ### Performance
 
-| Write Batch Size | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| 1 | 1594 | 24576 | 3947 | 15.79 | 9 |
-| 10 | 536 | 24576 | 11742 | 46.97 | 34 |
-| 100 | 407 | 24576 | 15456 | 61.83 | 269 |
-| 1000 | 354 | 24576 | 17759 | 71.04 | 2321 |
-| 2000 | 356 | 24576 | 17695 | 70.78 | 5074 |
-  
+| Write Batch Size | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+|-----------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|                1 |           1594 |            24576 |           3947 |        15.79 |                       9 |
+|               10 |            536 |            24576 |          11742 |        46.97 |                      34 |
+|              100 |            407 |            24576 |          15456 |        61.83 |                     269 |
+|             1000 |            354 |            24576 |          17759 |        71.04 |                    2321 |
+|             2000 |            356 |            24576 |          17695 |        70.78 |                    5074 |
 
 ### Resource Usage
 
 | Write batch size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 71 | 6 | 52 | 21753 | 11071 | 618 | 32 | 0 |
-| 10 | 66 | 8 | 107 | 61113 | 28274 | 548 | 85 | 0 |
-| 100 | 67 | 5 | 78 | 78430 | 36658 | 514 | 109 | 1 |
-| 1000 | 70 | 7 | 210 | 89599 | 42078 | 571 | 124 | 1 |
-| 2000 | 73 | 5 | 278 | 89036 | 41925 | 569 | 124 | 1 |
-  
+|-----------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                1 |            71 |                        6 |                        52 |                   21753 |               11071 |      618 |               32 |               0 |
+|               10 |            66 |                        8 |                       107 |                   61113 |               28274 |      548 |               85 |               0 |
+|              100 |            67 |                        5 |                        78 |                   78430 |               36658 |      514 |              109 |               1 |
+|             1000 |            70 |                        7 |                       210 |                   89599 |               42078 |      571 |              124 |               1 |
+|             2000 |            73 |                        5 |                       278 |                   89036 |               41925 |      569 |              124 |               1 |
 
 ### Analysis
 
@@ -199,20 +195,18 @@ insert batch size was 1,000.
 ### Performance
 
 | Primary Key format | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 485 | 24576 | 51917 | 51.92 | 165 |
-| UUID | 1218 | 24576 | 20657 | 20.66 | 515 |
-| BUSINESS_ID | 1198 | 24576 | 21003 | 21 | 507 |
-  
+|-------------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|          OBJECT_ID |            485 |            24576 |          51917 |        51.92 |                     165 |
+|               UUID |           1218 |            24576 |          20657 |        20.66 |                     515 |
+|        BUSINESS_ID |           1198 |            24576 |          21003 |           21 |                     507 |
 
 ### Resource Usage
 
 | Primary Key format | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 69 | 5 | 22 | 66235 | 31590 | 459 | 93 | 1 |
-| UUID | 91 | 1 | 8974 | 152368 | 12804 | 971 | 103 | 0 |
-| BUSINESS_ID | 92 | 0 | 6010 | 118000 | 12866 | 381 | 58 | 0 |
-  
+|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|          OBJECT_ID |            69 |                        5 |                        22 |                   66235 |               31590 |      459 |               93 |               1 |
+|               UUID |            91 |                        1 |                      8974 |                  152368 |               12804 |      971 |              103 |               0 |
+|        BUSINESS_ID |            92 |                        0 |                      6010 |                  118000 |               12866 |      381 |               58 |               0 |
 
 ### Analysis
 
@@ -248,28 +242,26 @@ simple integer fields in each. The load batch size is 1,000.
 ### Performance
 
 | Number of secondary indexes | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| 0 | 203 | 12857 | 16201 | 64.8 | 506 |
-| 1 | 283 | 12857 | 11617 | 46.47 | 744 |
-| 2 | 386 | 12857 | 8534 | 34.14 | 1076 |
-| 3 | 549 | 12857 | 5997 | 23.99 | 1615 |
-| 4 | 802 | 12857 | 4105 | 16.42 | 2407 |
-| 8 | 2689 | 12857 | 1224 | 4.9 | 7822 |
-| 16 | 6908 | 12857 | 476 | 1.91 | 18764 |
-  
+|----------------------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|                           0 |            203 |            12857 |          16201 |         64.8 |                     506 |
+|                           1 |            283 |            12857 |          11617 |        46.47 |                     744 |
+|                           2 |            386 |            12857 |           8534 |        34.14 |                    1076 |
+|                           3 |            549 |            12857 |           5997 |        23.99 |                    1615 |
+|                           4 |            802 |            12857 |           4105 |        16.42 |                    2407 |
+|                           8 |           2689 |            12857 |           1224 |          4.9 |                    7822 |
+|                          16 |           6908 |            12857 |            476 |         1.91 |                   18764 |
 
 ### Resource Usage
 
 | Number of secondary Indexes | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 0 | 58 | 7 | 28 | 81579 | 38384 | 516 | 114 | 1 |
-| 1 | 72 | 0 | 3015 | 108673 | 27525 | 487 | 93 | 1 |
-| 2 | 81 | 0 | 4394 | 103358 | 20220 | 407 | 77 | 0 |
-| 3 | 87 | 0 | 5459 | 103360 | 14208 | 344 | 61 | 0 |
-| 4 | 91 | 0 | 6054 | 102429 | 9726 | 273 | 49 | 0 |
-| 8 | 93 | 0 | 5556 | 88032 | 2900 | 228 | 32 | 0 |
-| 16 | 94 | 0 | 5638 | 83196 | 1129 | 819 | 49 | 0 |
-  
+|----------------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                           0 |            58 |                        7 |                        28 |                   81579 |               38384 |      516 |              114 |               1 |
+|                           1 |            72 |                        0 |                      3015 |                  108673 |               27525 |      487 |               93 |               1 |
+|                           2 |            81 |                        0 |                      4394 |                  103358 |               20220 |      407 |               77 |               0 |
+|                           3 |            87 |                        0 |                      5459 |                  103360 |               14208 |      344 |               61 |               0 |
+|                           4 |            91 |                        0 |                      6054 |                  102429 |                9726 |      273 |               49 |               0 |
+|                           8 |            93 |                        0 |                      5556 |                   88032 |                2900 |      228 |               32 |               0 |
+|                          16 |            94 |                        0 |                      5638 |                   83196 |                1129 |      819 |               49 |               0 |
 
 ## Standard vs Provisioned IOPS and Throughput
 
@@ -291,21 +283,19 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 
 ### Performance
 
-| Disk Specification | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| PROVISIONED (60GB@3000IOPS) | 804 | 12857 | 4096 | 16.38 | 2463 |
-| STANDARD (2048GB@6000IOPS) | 810 | 12857 | 4064 | 16.26 | 2466 |
-| STANDARD (60GB@3000IOPS) | 833 | 12857 | 3953 | 15.81 | 2515 |
-  
+|          Disk Specification | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
+|----------------------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+| PROVISIONED (60GB@3000IOPS) |            804 |            12857 |           4096 |        16.38 |                    2463 |
+|  STANDARD (2048GB@6000IOPS) |            810 |            12857 |           4064 |        16.26 |                    2466 |
+|    STANDARD (60GB@3000IOPS) |            833 |            12857 |           3953 |        15.81 |                    2515 |
 
 ### Resource Usage
 
-| Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| PROVISIONED (60GB@3000IOPS) | 91 | 0 | 5960 | 102477 | 9704 | 254 | 47 | 0 |
-| STANDARD (2048GB@6000IOPS) | 91 | 0 | 5912 | 100851 | 9629 | 257 | 48 | 0 |
-| STANDARD (60GB@3000IOPS) | 92 | 0 | 6181 | 102807 | 9366 | 254 | 47 | 0 |
-  
+|          Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
+|----------------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+| PROVISIONED (60GB@3000IOPS) |            91 |                        0 |                      5960 |                  102477 |                9704 |      254 |               47 |               0 |
+|  STANDARD (2048GB@6000IOPS) |            91 |                        0 |                      5912 |                  100851 |                9629 |      257 |               48 |               0 |
+|    STANDARD (60GB@3000IOPS) |            92 |                        0 |                      6181 |                  102807 |                9366 |      254 |               47 |               0 |
 
 ## Impact of Instance Size on write performance
 
@@ -324,24 +314,22 @@ In these tests we are using 2000 provisioned IOPS.
 ### Performance
 
 | Instance Type | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| M30 | 5088 | 46875 | 2358 | 9.43 | 10806 |
-| M40 | 703 | 46875 | 17072 | 68.29 | 1292 |
-| M50 | 432 | 46875 | 27772 | 111.09 | 778 |
-| M60 | 362 | 46875 | 33182 | 132.73 | 622 |
-| M80 | 239 | 46875 | 50275 | 201.1 | 297 |
-  
+|--------------:|---------------:|-----------------:|---------------:|-------------:|------------------------:|
+|           M30 |           5088 |            46875 |           2358 |         9.43 |                   10806 |
+|           M40 |            703 |            46875 |          17072 |        68.29 |                    1292 |
+|           M50 |            432 |            46875 |          27772 |       111.09 |                     778 |
+|           M60 |            362 |            46875 |          33182 |       132.73 |                     622 |
+|           M80 |            239 |            46875 |          50275 |        201.1 |                     297 |
 
 ### Resource Usage
 
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| M30 | 92 | 0 | 5133 | 87797 | 5588 | 409 | 47 | 0 |
-| M40 | 87 | 0 | 7815 | 193188 | 40449 | 2436 | 197 | 1 |
-| M50 | 40 | 17 | 6144 | 218253 | 65804 | 2881 | 249 | 0 |
-| M60 | 23 | 11 | 4840 | 288562 | 78621 | 3157 | 284 | 0 |
-| M80 | 13 | 7 | 4125 | 349582 | 119119 | 2554 | 350 | 0 |
-  
+|-------------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|----------------:|
+|                M30 |            92 |                        0 |                      5133 |                   87797 |                5588 |      409 |               47 |               0 |
+|                M40 |            87 |                        0 |                      7815 |                  193188 |               40449 |     2436 |              197 |               1 |
+|                M50 |            40 |                       17 |                      6144 |                  218253 |               65804 |     2881 |              249 |               0 |
+|                M60 |            23 |                       11 |                      4840 |                  288562 |               78621 |     3157 |              284 |               0 |
+|                M80 |            13 |                        7 |                      4125 |                  349582 |              119119 |     2554 |              350 |               0 |
 
 ## Impact of hot documents and concurrency on write performance
 
@@ -361,38 +349,36 @@ number of threads, per perform
 ### Performance
 
 | Num Threads | Updating Index | writeConflicts | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| 10 |  | 525494 | 406 | 2465 | 2.75 |
-| 20 |  | 804183 | 298 | 3354 | 4.28 |
-| 50 |  | 1048864 | 243 | 4121 | 9.3 |
-| 100 |  | 1612936 | 248 | 4035 | 19.58 |
-| 200 |  | 3601204 | 334 | 2994 | 53.02 |
-| 400 |  | 5425114 | 419 | 2388 | 93.08 |
-| 10 | true | 587926 | 445 | 2250 | 3.05 |
-| 20 | true | 846006 | 316 | 3160 | 4.49 |
-| 50 | true | 2004081 | 293 | 3409 | 12.26 |
-| 100 | true | 2369256 | 285 | 3508 | 24.47 |
-| 200 | true | 5472133 | 423 | 2362 | 63.15 |
-| 400 | true | 6542750 | 471 | 2124 | 101.81 |
-  
+|------------:|---------------:|---------------:|---------------:|----------------------:|------------------------:|
+|          10 |                |         525494 |            406 |                  2465 |                    2.75 |
+|          20 |                |         804183 |            298 |                  3354 |                    4.28 |
+|          50 |                |        1048864 |            243 |                  4121 |                     9.3 |
+|         100 |                |        1612936 |            248 |                  4035 |                   19.58 |
+|         200 |                |        3601204 |            334 |                  2994 |                   53.02 |
+|         400 |                |        5425114 |            419 |                  2388 |                   93.08 |
+|          10 |           true |         587926 |            445 |                  2250 |                    3.05 |
+|          20 |           true |         846006 |            316 |                  3160 |                    4.49 |
+|          50 |           true |        2004081 |            293 |                  3409 |                   12.26 |
+|         100 |           true |        2369256 |            285 |                  3508 |                   24.47 |
+|         200 |           true |        5472133 |            423 |                  2362 |                   63.15 |
+|         400 |           true |        6542750 |            471 |                  2124 |                  101.81 |
 
 ### Resource Usage
 
 | Num Threads | Updating Index | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) |
-| --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 10 |  | 63 | 5 | 2 | 359 | 0.06 | 1068 | 5 |
-| 20 |  | 66 | 2 | 3 | 518 | 0.04 | 1063 | 5 |
-| 50 |  | 69 | 1 | 6 | 698 | 0.04 | 652 | 4 |
-| 100 |  | 75 | 1 | 10 | 785 | 0.04 | 352 | 3 |
-| 200 |  | 78 | 0 | 15 | 786 | 0.04 | 142 | 2 |
-| 400 |  | 84 | 0 | 27 | 923 | 0.04 | 86 | 2 |
-| 10 | true | 78 | 2 | 3 | 482 | 0.07 | 1027 | 5 |
-| 20 | true | 74 | 1 | 2 | 598 | 0.05 | 1025 | 5 |
-| 50 | true | 73 | 1 | 6 | 693 | 0.04 | 689 | 4 |
-| 100 | true | 75 | 1 | 13 | 938 | 0.05 | 350 | 3 |
-| 200 | true | 84 | 0 | 14 | 774 | 0.04 | 139 | 2 |
-| 400 | true | 86 | 0 | 23 | 936 | 0.06 | 82 | 2 |
-  
+|------------:|---------------:|--------------:|-------------------------:|--------------------------:|------------------------:|--------------------:|---------:|-----------------:|
+|          10 |                |            63 |                        5 |                         2 |                     359 |                0.06 |     1068 |                5 |
+|          20 |                |            66 |                        2 |                         3 |                     518 |                0.04 |     1063 |                5 |
+|          50 |                |            69 |                        1 |                         6 |                     698 |                0.04 |      652 |                4 |
+|         100 |                |            75 |                        1 |                        10 |                     785 |                0.04 |      352 |                3 |
+|         200 |                |            78 |                        0 |                        15 |                     786 |                0.04 |      142 |                2 |
+|         400 |                |            84 |                        0 |                        27 |                     923 |                0.04 |       86 |                2 |
+|          10 |           true |            78 |                        2 |                         3 |                     482 |                0.07 |     1027 |                5 |
+|          20 |           true |            74 |                        1 |                         2 |                     598 |                0.05 |     1025 |                5 |
+|          50 |           true |            73 |                        1 |                         6 |                     693 |                0.04 |      689 |                4 |
+|         100 |           true |            75 |                        1 |                        13 |                     938 |                0.05 |      350 |                3 |
+|         200 |           true |            84 |                        0 |                        14 |                     774 |                0.04 |      139 |                2 |
+|         400 |           true |            86 |                        0 |                        23 |                     936 |                0.06 |       82 |                2 |
 
 ## Comparison of using UpdateOne vs. FindOneAnd Update and upsert vs. insert
 
@@ -408,19 +394,18 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 
 ### Performance
 
-| Percent Inserts | Function | Using Upsert | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
-| --: | --: | --: | --: | --: | --: |
-| 0 | UpdateOne | false | 167 | 3000 | 7.82 |
-| 0 | UpdateOne | true | 178 | 2810 | 8.27 |
-| 0 | FindOneAndUpdate | false | 196 | 2550 | 10.04 |
-| 0 | FindOneAndUpdate | true | 206 | 2429 | 10.65 |
-| 50 | UpdateOne | false | 200 | 2505 | 6.16 |
-| 50 | UpdateOne | true | 163 | 3061 | 7.6 |
-| 50 | FindOneAndUpdate | false | 214 | 2333 | 6.73 |
-| 50 | FindOneAndUpdate | true | 173 | 2883 | 8.33 |
-  
+| Percent Inserts |         Function | Using Upsert | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
+|----------------:|-----------------:|-------------:|---------------:|----------------------:|------------------------:|
+|               0 |        UpdateOne |        false |            167 |                  3000 |                    7.82 |
+|               0 |        UpdateOne |         true |            178 |                  2810 |                    8.27 |
+|               0 | FindOneAndUpdate |        false |            196 |                  2550 |                   10.04 |
+|               0 | FindOneAndUpdate |         true |            206 |                  2429 |                   10.65 |
+|              50 |        UpdateOne |        false |            200 |                  2505 |                    6.16 |
+|              50 |        UpdateOne |         true |            163 |                  3061 |                     7.6 |
+|              50 | FindOneAndUpdate |        false |            214 |                  2333 |                    6.73 |
+|              50 | FindOneAndUpdate |         true |            173 |                  2883 |                    8.33 |
 
-## High level comparison fo querying
+## High level comparison of querying types
 
 ### Description
 
@@ -444,41 +429,101 @@ being limited by it.
 
 ### Performance
 
-| Query Type | Time Taken (s) | Speed (Queries/s) |
-| --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 301 | 11104 |
-| 1 document, not cached, indexed. | 301 | 4661 |
-| 100 documents,1 term, cached, indexed  | 301 | 1781 |
-| 100 documents, 1 term, not cached, indexed | 301 | 342 |
-| 20 Documents, 1 term, cached | 301 | 4514 |
-| 20 Documents, 380 skipped, 1 term, cached | 301 | 3057 |
-| 20 documents, 380 range skipped, 1 term, cached | 301 | 4429 |
-| 20 documents, 1 term, not cached | 301 | 4361 |
-| 20 documents, 380 skipped, 1 term, not cached | 301 | 2982 |
-| 20 documents, 380 range skipped, 1 term, not cached | 301 | 4216 |
-| 1 Document, 2 terms, partial index, not cached | 302 | 27 |
-| 1 Document, 2 terms, compound index,  cached | 301 | 4725 |
-| 100 Documents, 100 Terms, indexed, cached | 301 | 1495 |
-  
+|                                          Query Type | Time Taken (s) | Speed (Queries/s) |
+|----------------------------------------------------:|---------------:|------------------:|
+|               1 document, 1 term,  cached, indexed. |            301 |             11104 |
+|                    1 document, not cached, indexed. |            301 |              4661 |
+|               100 documents,1 term, cached, indexed |            301 |              1781 |
+|          100 documents, 1 term, not cached, indexed |            301 |               342 |
+|                        20 Documents, 1 term, cached |            301 |              4514 |
+|           20 Documents, 380 skipped, 1 term, cached |            301 |              3057 |
+|     20 documents, 380 range skipped, 1 term, cached |            301 |              4429 |
+|                    20 documents, 1 term, not cached |            301 |              4361 |
+|       20 documents, 380 skipped, 1 term, not cached |            301 |              2982 |
+| 20 documents, 380 range skipped, 1 term, not cached |            301 |              4216 |
+|      1 Document, 2 terms, partial index, not cached |            302 |                27 |
+|        1 Document, 2 terms, compound index,  cached |            301 |              4725 |
+|           100 Documents, 100 Terms, indexed, cached |            301 |              1495 |
 
 ### Resource Usage
 
-| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
-| --: | --: | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 75 | 0 | 0 | 4 |
-| 1 document, not cached, indexed. | 55 | 27 | 4719 | 3516 |
-| 100 documents,1 term, cached, indexed  | 79 | 0 | 1 | 5 |
-| 100 documents, 1 term, not cached, indexed | 79 | 0 | 23766 | 155 |
-| 20 Documents, 1 term, cached | 77 | 0 | 1 | 5 |
-| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 1 | 5 |
-| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 1 | 5 |
-| 20 documents, 1 term, not cached | 77 | 0 | 4 | 4 |
-| 20 documents, 380 skipped, 1 term, not cached | 78 | 0 | 1 | 5 |
-| 20 documents, 380 range skipped, 1 term, not cached | 77 | 0 | 1 | 5 |
-| 1 Document, 2 terms, partial index, not cached | 25 | 65 | 4954 | 3575 |
-| 1 Document, 2 terms, compound index,  cached | 75 | 3 | 4636 | 3569 |
-| 100 Documents, 100 Terms, indexed, cached | 78 | 0 | 1 | 5 |
-  
+|                                          Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
+|----------------------------------------------------:|--------------:|-------------------------:|--------------------------:|---------:|
+|               1 document, 1 term,  cached, indexed. |            75 |                        0 |                         0 |        4 |
+|                    1 document, not cached, indexed. |            55 |                       27 |                      4719 |     3516 |
+|               100 documents,1 term, cached, indexed |            79 |                        0 |                         1 |        5 |
+|          100 documents, 1 term, not cached, indexed |            79 |                        0 |                     23766 |      155 |
+|                        20 Documents, 1 term, cached |            77 |                        0 |                         1 |        5 |
+|           20 Documents, 380 skipped, 1 term, cached |            78 |                        0 |                         1 |        5 |
+|     20 documents, 380 range skipped, 1 term, cached |            77 |                        0 |                         1 |        5 |
+|                    20 documents, 1 term, not cached |            77 |                        0 |                         4 |        4 |
+|       20 documents, 380 skipped, 1 term, not cached |            78 |                        0 |                         1 |        5 |
+| 20 documents, 380 range skipped, 1 term, not cached |            77 |                        0 |                         1 |        5 |
+|      1 Document, 2 terms, partial index, not cached |            25 |                       65 |                      4954 |     3575 |
+|        1 Document, 2 terms, compound index,  cached |            75 |                        3 |                      4636 |     3569 |
+|           100 Documents, 100 Terms, indexed, cached |            78 |                        0 |                         1 |        5 |
+
+## Comparing the number of documents retrieved after and index lookup
+
+### Description
+
+This test fetches N documents identified by a single indexed key comparing both
+cached and uncached options. Although it projects and returns only the _id
+field to the client for each to avoid measuring network, it needs to FETCH the
+entire document into cache to do so as _id is not in the index used.
+
+This shows how the performance is impaced by the number of documents. Fetching >
+101 documents further requires a second call _getmore_ by the client to fetch
+the next batch of documents.
+
+### Performance
+
+|                                     Query Type | Time Taken (s) | Speed (Queries/s) |
+|-----------------------------------------------:|---------------:|------------------:|
+|          1 document, 1 term,  cached, indexed. |            301 |              1883 |
+|        10 documents, 1 term,  cached, indexed. |            301 |              1939 |
+|        20 documents, 1 term,  cached, indexed. |            301 |              1960 |
+|        50 documents, 1 term,  cached, indexed. |            301 |              1971 |
+|       100 documents, 1 term,  cached, indexed. |            301 |              1761 |
+|       200 documents, 1 term,  cached, indexed. |            301 |               889 |
+|       400 documents, 1 term,  cached, indexed. |            301 |               514 |
+|      1 document, 1 term,  not cached, indexed. |            301 |              1761 |
+|  10 documents, 1 term,   not cached,, indexed. |            301 |              1605 |
+|  20 documents, 1 term,   not cached,, indexed. |            301 |              1568 |
+|  50 documents, 1 term,   not cached,, indexed. |            301 |              1231 |
+| 100 documents, 1 term,   not cached,, indexed. |            301 |               384 |
+| 200 documents, 1 term,   not cached,, indexed. |            302 |                44 |
+| 400 documents, 1 term,   not cached,, indexed. |            303 |                12 |
+
+### Resource Usage
+
+|                                     Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
+|-----------------------------------------------:|--------------:|-------------------------:|--------------------------:|---------:|
+|          1 document, 1 term,  cached, indexed. |            19 |                        0 |                         1 |        4 |
+|        10 documents, 1 term,  cached, indexed. |            26 |                        0 |                         1 |        3 |
+|        20 documents, 1 term,  cached, indexed. |            36 |                        0 |                         1 |        3 |
+|        50 documents, 1 term,  cached, indexed. |            50 |                        0 |                         1 |        3 |
+|       100 documents, 1 term,  cached, indexed. |            78 |                        0 |                         1 |        5 |
+|       200 documents, 1 term,  cached, indexed. |            76 |                        0 |                         1 |        4 |
+|       400 documents, 1 term,  cached, indexed. |            78 |                        0 |                         1 |       28 |
+|      1 document, 1 term,  not cached, indexed. |            22 |                        0 |                         1 |        3 |
+|  10 documents, 1 term,   not cached,, indexed. |            20 |                        0 |                         1 |        3 |
+|  20 documents, 1 term,   not cached,, indexed. |            24 |                        0 |                         1 |        4 |
+|  50 documents, 1 term,   not cached,, indexed. |            77 |                        0 |                     23070 |       12 |
+| 100 documents, 1 term,   not cached,, indexed. |            80 |                        0 |                     26563 |      165 |
+| 200 documents, 1 term,   not cached,, indexed. |            33 |                       54 |                      7539 |     3604 |
+| 400 documents, 1 term,   not cached,, indexed. |            23 |                       68 |                      4410 |     3565 |
+
+### Analysis
+
+We can see that the impact of fetching up to 100 documents where the data is in
+cache is minimal, the FETCH operation is relatively inexpensive. Beyond 100,
+then the second network call seems to have an outsize impact on performance with
+speed dropping by 40% at 200 and again by 40% when we go to 400 despite these
+being in the same call tp getmore.
+
+Outside of cache then the cost of each FETCH is much more significant, although
+this is likely dependent on the Disk IOPS available.
 
 ## To Add
 
@@ -494,7 +539,7 @@ being limited by it.
     * ~~Retrieval single By Key~~
     * ~~Retrieval set By Single Key~~
     * ~~Retrieval page N with skip~~
-    * Retrieval next page with range quey
+    * ~~Retrieval next page with range quey~~
     * ~~Retrieval part index~~
     * ~~Retrieval $in~~
     * ~~Retrieval out of cache~~

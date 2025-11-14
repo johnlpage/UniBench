@@ -1,0 +1,99 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.QueryTest",
+  "numberOfThreads": 48,
+  "database": "unibench",
+  "collection": "query",
+  "initialDocsToInsert": 10000000,
+  "groupSize": 400,
+  "writeBatchSize": 1000,
+  "docSizeKB": 4.0,
+  "testTimeSecs": 300,
+  "warmup": false,
+  "variants": [
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "STANDARD",
+        "atlasIOPS": 3072,
+        "atlasDiskSizeGB": 1024,
+        "cost": 177
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 1000,
+        "atlasDiskSizeGB": 1024,
+        "cost": 233
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024,
+        "cost": 313
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024,
+        "cost": 313
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 4500,
+        "atlasDiskSizeGB": 1024,
+        "cost": 373
+      },
+      "limit": 100
+    },
+    {
+      "comment": "100 documents, 1 term,   not cached, indexed.",
+      "query": {
+        "group": "RANDINT(1,25000)"
+      },
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 6000,
+        "atlasDiskSizeGB": 1024,
+        "cost": 433
+      },
+      "limit": 100
+    }
+  ]
+}
+
