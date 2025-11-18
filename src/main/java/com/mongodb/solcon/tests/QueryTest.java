@@ -253,6 +253,7 @@ public class QueryTest extends BaseMongoTest {
 
   public void TestReset() {
     parseTestParams();
+    GenerateData(); // In case we blew the cluster away - NoOp if exists
   }
 
   // WarmCache is called before each rune

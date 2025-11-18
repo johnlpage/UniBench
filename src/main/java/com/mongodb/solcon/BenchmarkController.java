@@ -123,6 +123,7 @@ public class BenchmarkController {
 
   @SuppressWarnings("unchecked")
   void runTest(String testConfigFile) {
+
     Document testConfig = readConfigFile(testConfigFile);
     testConfig.append(
         "filename", testConfigFile.replaceAll(".*[/\\\\]([^./\\\\]+)\\.[^/\\\\]*$", "$1"));
@@ -215,6 +216,20 @@ public class BenchmarkController {
               metrics,
               startTime,
               endTime);
+        }
+        // If a variant tells us to teardown we should as modifying may take too long
+        if (variant.containsKey("instance")) {
+          Document instance = variant.get("instance", Document.class);
+          if (instance.containsKey("teardown") && instance.getBoolean("teardown")) {
+            try {
+              atlasClusterManager.deleteCluster(testClusterName);
+              System.out.println("Deleted Cluster " + testClusterName);
+              System.exit(0);
+            } catch (Exception e) {
+              logger.error("An error occurred while deleting a cluster from Atlas", e);
+              System.exit(1);
+            }
+          }
         }
       }
 

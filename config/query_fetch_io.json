@@ -20,7 +20,8 @@
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3072,
         "atlasDiskSizeGB": 1024,
-        "cost": 177
+        "cost": 177,
+        "teardown": true
       },
       "limit": 100
     },
@@ -34,7 +35,8 @@
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 1000,
         "atlasDiskSizeGB": 1024,
-        "cost": 233
+        "cost": 233,
+        "teardown": true
       },
       "limit": 100
     },
@@ -48,7 +50,8 @@
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 1024,
-        "cost": 313
+        "cost": 313,
+        "teardown": true
       },
       "limit": 100
     },
@@ -62,7 +65,8 @@
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 1024,
-        "cost": 313
+        "cost": 313,
+        "teardown": true
       },
       "limit": 100
     },
@@ -76,7 +80,8 @@
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 4500,
         "atlasDiskSizeGB": 1024,
-        "cost": 373
+        "cost": 373,
+        "teardown": true
       },
       "limit": 100
     },
@@ -90,7 +95,8 @@
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 6000,
         "atlasDiskSizeGB": 1024,
-        "cost": 433
+        "cost": 433,
+        "teardown": true
       },
       "limit": 100
     }
