@@ -224,7 +224,7 @@ public class BenchmarkController {
             try {
               atlasClusterManager.deleteCluster(testClusterName);
               System.out.println("Deleted Cluster " + testClusterName);
-              System.exit(0);
+
             } catch (Exception e) {
               logger.error("An error occurred while deleting a cluster from Atlas", e);
               System.exit(1);
