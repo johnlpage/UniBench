@@ -295,6 +295,7 @@ public class AtlasClusterManager {
     request.setHeader(HttpHeaders.ACCEPT, "application/vnd.atlas.2023-11-15+json");
     HttpResponse response = httpClient.execute(request);
     int statusCode = response.getStatusLine().getStatusCode();
+    EntityUtils.consume(response.getEntity());
     if (statusCode == 404) {
       logger.info("Cluster not found: " + clusterName);
       return;
