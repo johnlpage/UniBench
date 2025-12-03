@@ -10,28 +10,68 @@
   "variants": [
     {
       "instance": {
-        "atlasInstanceType": "M30",
+        "atlasInstanceType": "M40",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3000,
-        "atlasDiskSizeGB": 60
+        "atlasDiskSizeGB": 200
       },
       "nSecondaryIndexes": 4
     },
     {
       "instance": {
-        "atlasInstanceType": "M30",
-        "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 3000,
-        "atlasDiskSizeGB": 60
-      },
-      "nSecondaryIndexes": 4
-    },
-    {
-      "instance": {
-        "atlasInstanceType": "M30",
+        "atlasInstanceType": "M40",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 6000,
         "atlasDiskSizeGB": 2048
+      },
+      "nSecondaryIndexes": 4
+    },
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 1000,
+        "atlasDiskSizeGB": 200
+      },
+      "nSecondaryIndexes": 4
+    },
+    ,
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 2000,
+        "atlasDiskSizeGB": 200
+      },
+      "nSecondaryIndexes": 4
+    }
+  ,
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 200
+      },
+      "nSecondaryIndexes": 4
+    },
+    ,
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 4500,
+        "atlasDiskSizeGB": 200
+      },
+      "nSecondaryIndexes": 4
+    }
+  ,
+    {
+      "instance": {
+        "atlasInstanceType": "M40",
+        "atlasDiskType": "PROVISIONED",
+        "atlasIOPS": 6000,
+        "atlasDiskSizeGB": 200
       },
       "nSecondaryIndexes": 4
     }

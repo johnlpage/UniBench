@@ -60,6 +60,11 @@ echo ""
 echo "✓ Instance launched successfully!"
 echo "Instance ID: $INSTANCE_ID"
 echo "Public IP: $PUBLIC_IP"
+echo "Adding Access to MongoDB Cloud Project"
+atlas accessLists create $PUBLIC_IP   --deleteAfter $(date -u -v+24H '+%Y-%m-%dT%H:%M:%SZ') --projectId $ATLAS_PROJECT_ID
+echo "Adding IP address to API Key to allow cluster creation"
+atlas projects apiKeys accessLists create $PUBLIC_IP  --id $ATLAS_PUBLIC_KEY  --projectId $ATLAS_PROJECT_ID
+
 echo ""
 echo "Connect with: ssh -i ~/.ssh/$KEYNAME.pem ec2-user@$PUBLIC_IP"
 

@@ -84,6 +84,7 @@ public class QueryTest extends BaseMongoTest {
 
     Document newQuery = processDocument(queryTemplate);
     if (threadNo == 0) {
+      logger.info("Template: {}", queryTemplate.toJson());
       logger.info("Example: {}", newQuery.toJson());
       Document explain =
           collection

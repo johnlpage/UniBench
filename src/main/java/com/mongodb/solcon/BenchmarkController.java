@@ -113,9 +113,11 @@ public class BenchmarkController {
     Document configFile = null;
     try {
       String configString = new String(Files.readAllBytes(Paths.get(fileName)));
+      configString = JsonFormulaPreprocessor.preprocessJson(configString);
       configFile = Document.parse(configString);
     } catch (Exception ex) {
-      logger.error("ERROR IN CONFIG: {} {} ", fileName, ex.getMessage());
+      logger.error("ERROR IN CONFIG: {}  ", ex.getMessage());
+      ex.printStackTrace();
       System.exit(1);
     }
     return configFile;

@@ -12,8 +12,8 @@
       "instance": {
         "atlasInstanceType": "M30",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024
       },
       "nSecondaryIndexes": 4
     },
@@ -21,8 +21,8 @@
       "instance": {
         "atlasInstanceType": "M40",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024
       },
       "nSecondaryIndexes": 4
     },
@@ -30,8 +30,8 @@
       "instance": {
         "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024
       },
       "nSecondaryIndexes": 4
     },
@@ -39,8 +39,8 @@
       "instance": {
         "atlasInstanceType": "M60",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024
       },
       "nSecondaryIndexes": 4
     },
@@ -48,8 +48,8 @@
       "instance": {
         "atlasInstanceType": "M80",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 250
+        "atlasIOPS": 3000,
+        "atlasDiskSizeGB": 1024
       },
       "nSecondaryIndexes": 4
     }

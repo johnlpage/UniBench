@@ -14,7 +14,7 @@
       "comment": "1 document, 1 term,  cached, indexed.",
       "nQueries": 4000000,
       "query": {
-        "_id": "RANDINT(1,10000)"
+        "_id": "RANDINT(1,=$initialDocsToInsert/500)"
       },
       "limit": 1
     },
@@ -22,7 +22,7 @@
       "comment": "1 document, not cached, indexed.",
       "nQueries": 2000000,
       "query": {
-        "_id": "RANDINT(1,5000000)"
+        "_id": "RANDINT(1,=$initialDocsToInsert)"
       },
       "limit": 1
     },
@@ -38,7 +38,7 @@
       "comment": "100 documents, 1 term, not cached, indexed",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,12500)"
+        "group": "RANDINT(1,=$initialDocsToInsert/400)"
       },
       "limit": 100
     },
@@ -74,7 +74,7 @@
       "comment": "20 documents, 1 term, not cached",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,12500)"
+        "group": "RANDINT(1,=$initialDocsToInsert/400)"
       },
       "limit": 20
     },
@@ -82,7 +82,7 @@
       "comment": "20 documents, 380 skipped, 1 term, not cached",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,12500)"
+        "group": "RANDINT(1,=$initialDocsToInsert/400)"
       },
       "limit": 20,
       "skip": 380
@@ -91,7 +91,7 @@
       "comment": "20 documents, 380 range skipped, 1 term, not cached",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,12500)",
+        "group": "RANDINT(1,=$initialDocsToInsert/400)",
         "group_seq_i": {
           "$gte": 380
         }
@@ -102,7 +102,7 @@
       "comment": "1 Document, 2 terms, partial index, not cached",
       "nQueries": 1000,
       "query": {
-        "group": "RANDINT(1,12500)",
+        "group": "RANDINT(1,=$initialDocsToInsert/400)",
         "group_seq": "RANDINT(1,400)"
       },
       "limit": 1
@@ -111,7 +111,7 @@
       "comment": "1 Document, 2 terms, compound index,  cached",
       "nQueries": 5000,
       "query": {
-        "group": "RANDINT(1,12500)",
+        "group": "RANDINT(1,=$initialDocsToInsert/400)",
         "group_seq_i": "RANDINT(1,400)"
       },
       "limit": 1
@@ -131,7 +131,7 @@
       "nQueries": 1000,
       "query": {
         "_id": {
-          "$in": "RANDINTLIST(1,5000000,100)"
+          "$in": "RANDINTLIST(1,=$initialDocsToInsert,100)"
         }
       },
       "limit": 100
