@@ -35,7 +35,6 @@
       },
       "nSecondaryIndexes": 4
     },
-    ,
     {
       "instance": {
         "atlasInstanceType": "M40",
@@ -44,8 +43,7 @@
         "atlasDiskSizeGB": 200
       },
       "nSecondaryIndexes": 4
-    }
-  ,
+    },
     {
       "instance": {
         "atlasInstanceType": "M40",
@@ -55,7 +53,6 @@
       },
       "nSecondaryIndexes": 4
     },
-    ,
     {
       "instance": {
         "atlasInstanceType": "M40",
@@ -64,8 +61,7 @@
         "atlasDiskSizeGB": 200
       },
       "nSecondaryIndexes": 4
-    }
-  ,
+    },
     {
       "instance": {
         "atlasInstanceType": "M40",
