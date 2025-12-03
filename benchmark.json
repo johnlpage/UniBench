@@ -1,7 +1,7 @@
 {
   "comment": "This is the top level config file",
   "tests": [
-    "config/insert_docize.json",
+    "config/insert_docsize.json",
     "config/insert_batchsize.json",
     "config/insert_idtype.json",
     "config/insert_nindexes.json",
