@@ -70,7 +70,7 @@ public class InsertTest extends BaseMongoTest {
     if (variant != null && variant.getString("idType") != null) {
       idType = variant.getString("idType");
     }
-
+    docFactory = new DocumentFactory(threadNo, idType, docsizeBytes, maxFieldsPerObject);
     // Allow variation of batch size
 
     writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
