@@ -9,23 +9,32 @@ Ignore content for now.
 | **Date**    | 2020-09-22 |
 | **Version** | 0.1        |
 
-## About this document
+## TLDR;
+
+This document shows the performance you can expect from MongoDB on a given
+hardware infrastructure. You can use it to compare the performance of your own
+client code and to determine the hardware required or a given performance
+target. It highlights the impact of various parameters on the performance of
+MongoDB.
+
+## Introduction
 
 This document shows the expected performance of MongoDB when performing a given
-task. Each table shows the impacton performance when changing parameters. For
-example, adding an index. This is testing only Database performance, you should
-assume that the client is using MongoDB optimally and that there are no network
-constraints between client and server.
+task. Each table shows the impact on the performance of changing individual test
+parameters. For example, adding an index. This is testing only database
+performance, you should assume that the client is using MongoDB optimally and
+that there are no network constraints between client and server unless the test
+explicitly says otherwise.
 
 Unless otherwise specified, the database tested is a 3-node Replica Set in
-MongoDB Atlas using an M30 (2 x vCPU, 8GB RAM, 2GB configured as Cache). This is
-using default of 3,000 IOPS on Amazon Web Services. Writes are using write
-concern majority, all reads
-are from the primary.
+MongoDB Atlas using an M40 (4 vCPU, 16GB RAM, 8GB configured as database
+cache). This is using default of 3,000 Standard IOPS on Amazon Web Services
+with a 200 GB disk. Writes are using write concern majority, all reads are from
+the primary. The test harness is running in the same cloud provider region.
 
 In MongoDB, you can scale vertically by using larger hardware but also
-horizontally by adding more replica sets, many workloads will scale linearly to
-1000's of times the throughput shown here.
+horizontally by adding more replica sets, most workloads will scale linearly to
+thousands of times the performance shown here via sharding.
 
 The intent of this document is to assist in understanding the approximate
 expected performance of MongoDB. This information can be used either to verify
@@ -39,11 +48,11 @@ that. Notes will be supplied with each test where the results show something of
 significance.
 
 The performance of MongoDB or any database will depend on the available CPU and
-Disk I/O capability. Available RAM will further reduce the amount of Disk I/O
-required by caching and amortizing write requests where safe to do so. This
-assumes an ideal client as used in most of these cases, however, some client
-constructs and then require more work per write operation by the server, which
-is demonstrated in later examples.
+Disk performance. Available RAM will further reduce the number of Disk
+operations required by caching and amortizing write requests where safe to do
+so. This assumes an ideal client as used in most of these cases, however, some
+client constructs and then require more work per write operation by the server,
+which is demonstrated in later examples.
 
 The author has tried to include explanations for the results and the underlying
 low-level behavior that makes them so with each example.
@@ -51,24 +60,23 @@ low-level behavior that makes them so with each example.
 # Data Ingestion
 
 This section covers getting data from outside MongoDB into MongoDB. Either data
-known to be new or data where some records are new, doem are modified and others
-are identical to existing records, existing in this case being based on a known
-key field.
+known to be new or data where some records are new, some are modified and others
+are identical to existing records; Existing in this case being determined by a
+unique key field value.
 
-## Impact of document size on insert speed
+## Expected insert speed by document size
 
 ### Description
 
-This shows how the document size impacts the speed in MB/s when using `insert`
+This shows how the document size impacts the write speed in MB/s when using
+`insert`
 operations to add documents and assign them a primary key. In the test 24 GB of
 data was bulk inserted into an empty collection. The only index is the _id index
-with the default ObjectID(), in this was only a small set of database blocks
-are being written to at any one time, so nearly all writes to the database are
-appended with minimal random I/O and maximal use of IOPS.
+with the default ObjectID().
 
-Data like this is very quick to write, but without additional indexes it can
+Data like this is efficient to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
-logging use cases.
+simple use cases.
 
 ### Performance
 
@@ -137,40 +145,67 @@ logging use cases.
 
 ### Analysis
 
-With small document, there are considerably more index entries for the primary
-key which we can assume adds some CPU overhead even when they are essentially
-sequential. The default volumnes used for these tests are AWS GP3 which have
-3,000 IOPS and 125MIB/S write speed. As each inserted document needs to be
-inserted in the Oplog, the Write-ahead-log (journal) and the collection we can
-see that we are hitting this limit even though we are using only about 18% of
-IOPS.
+We see that we can write >100,000 1KB documents per second on what is a
+relatively
+small server, although with so many individual documents the overheads of
+indexing
+increase the CPU usage. We are also capped with these small documents by a
+combination of client threads and network trips with significant time lost to
+network latency.
+
+Once we move to 4KB documents, we are writing more efficiently, the CPU drops
+to <50% of our 4 cores, and the total MB/s being written rises to 125MB/s when
+measured as JSON documents. The limit if MB/s written and so the inserts per
+second drop proportionally with the document size.
+
+Looking at the resource usage, we can see we are not using 100% of CPU and are
+ony using about 33% of our available IOPS. We can assume we are not network or
+client CPU constrained here, so what is limiting our writer throughput?
+
+The answer is the disk throughput. With "Standard" gp3 disks we are limited to
+125MB/s for any drive <170GB. This then goes up at 5MB/s per additional 10GB up
+to 260GB. Thereafter, rising at 1MB/s per additional 10GB.
+
+Out 200GB volume has a maximum write throughput of 125 + 85M + 15 = 225MB/s and
+this is what limits our total write speed.
+
+Each inserted document is compressed and then needs to be inserted in the Oplog,
+the Write-Ahead Log (journal) and the collection. We can see that we are hitting
+this limit even though we are using only about 33% of IOPS. Out 150MB/s of JSON
+becomes 450MB/s of uncompressed writes and ~225MB/s of compressed writes
+
+### Key Takeaways
+
+* It is important to think of write speed in MB/s not Inserts/s.
+* The limit to writes on Atlas is most commonly disk throughput — not IOPS.
+* Small disks (<170GB) are limited to 125MB/s, which is about 60MB/s of writes.
+* Each CPU core can write approx 60MB/s of data.
 
 ## Impact of client write batch size on write speed
 
 ### Description
 
-MongoDB allows you to send multiple write operations to the database in a single
-network request. As of MongoDB 8.0 these can even be writes to different
-colleciotns.
-Conversely, when using simply insertOne(), replaceOne() ( or save() in Spring
-Data) then each document is sent individually. This not only incurs a network
-round trip per document but also needs each document to independently
-wait for durability, requiring a network round trip to a secondary and awaiting
-a periodic disk flush on the secondary and primary.
+In this test we insert 24GB of data (6.2 Million 4 KB documents) using
+differing network write batch sizes to illustrate the impact batching writes for
+ingestion. We use 48 threads loading in parallel.
 
-When you send multiple write operations in a single network call, then the cost
-of
-the durability is shared between all the documents; there can be a
-little overhead for a larger batch whilst waiting for the whole batch to be
+MongoDB allows you to send multiple write operations to the database in a single
+network request. From MongoDB 8.0 onwards these can even be written to different
+collections. Conversely, when using simple insertOne(), replaceOne() (Or save()
+in Spring Data) then each document is sent individually. This not only incurs a
+network round trip per document but also needs each document to independently
+wait for durability, awaiting a periodic disk flush on the secondary and
+primary.
+
+When you send multiple write operations as a single network call, then the
+overhead of the durability is shared between all the documents; there can be a
+little cpu overhead for a larger batch whilst waiting for the whole batch to be
 processed, this still results in much higher throughput, albeit with some
 additional latency.
 
 When processing single writes or smaller batches, you can use more threads/async
-toincrease concurrency, but it is still far less efficient.
-
-In this test we insert 24GB of data ( 6.2 Million 4 KB documents ) using
-differing network write batch sizes to illustrate the impact of not incorrectly
-batching writes for ingestion. We use 48 threads loading in parallel.
+to increase concurrency, but it is still far less efficient than even small
+batches.
 
 ### Performance
 
@@ -244,47 +279,65 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 ### Analysis
 
 With the 48 threads we have we see that individual writes (batch size 1) it
-throttled by network hops and disk flushes to <4000 inserts per second - by
-batching we get this up to just under 18,000 inserts/second. We are at this
-point hitting the 125MB/s write limit of the AWS GP3 volume.
+throttled by network hops and disk flushes to only 6,000 inserts per second - by
+batching we get this up to just over 32,000 inserts/second. We are at this
+point hitting the 225/s write limit of our Disk.
 
 We can see that the optimal bulk insertion size here is 1,000 documents with a
-slight drop in speed at 2,000. Notably the IOPS is a little higher for the
+slight drop in speed at 2,000. Notably, the IOPS is a little higher for the
 single inserts even though the throughput is lower, this is because there are
 extra writes/flushes required to make each record separately durable, there is a
 lack of amortization of resources.
+
+Batches of 1,000 are good for a bulk ingestion but in a continuous ingestion
+scenario where we may be waiting in the client to build us a set to send the
+750ms latency for 1,000 documents is quite high ( although with parallel threads
+it still allows good throughput) - smaller batches betwen 10 and 100 give far
+lower latency per individual write at the expense of lower throughput.
+
+### Key Takeaways
+
+* Avoid sending individual write to the database if latency allows.
+* Consider queueing in the client and sending documents in small batches.
+* When loading a large data set, use batches of between 4 and 10MB in size.
+* MongoDB can process batches in parallel so do not send them serially.
 
 ## Impact of primary key type on write speed
 
 ### Description
 
-All Documents in MongoDB ha a primary key defined as the first field inthe
-document, this field is always called `_id`. Where the application does not
-supply it then the default value is assigned, a Unique ObjectId() value -
-ObjectID is a 12 byte GUID where the firat 4 bytes are the time in seconds since
-1970, these are therefore approximately sequential.
-
-The `_id` index is a BTree index, inserting mostly sequential values means older
-parts of the index do not need to be acessed for writes and new values are
-inserted into a small set of blocks reducing the write I/O
-
-By contrast, if a wholly random value is used for `_id` like a UUID then each
-new value may need to read or write any part of the index resulting in far more
-dirty blocks to be written to disk and more RAM required to cache it.
-
-In the middle ground an ID May have an inituial portion such as an account ID or
-Customer ID followed by a timestamp - in this case there will be one active
-block per user.
-
-This test looks at the impact of using an ObjectID vs a random UUID versus a
-typical
+This test looks at the impact of using an ObjectID vs. a random GUID versus an
 id constructed from AccountId and Timestamp such as you might use to record a
-financial
-transaction (BUSINESS_ID). In the Oatter case the id is a string srting with ACC
-followed by
-5 digits for the account and 8 hex characters for the timestamp.
-We insert 24 Million 1KB documents and measure the speed of each variant. The
-insert batch size was 1,000.
+financial transaction. This value being the uniquely indexed primary key used to
+identify documents.
+
+All Documents in MongoDB have a primary key defined as the first field in the
+document, this field is always called `_id`. Where the application does not
+supply it, then the client assigns a unique value. The data type of this
+auto-assigned value is ObjectId. An ObjectID is a 12-byte GUID where the first 4
+bytes are the time in seconds since 1970, these are therefore approximately
+sequential.
+
+In MongoDB all database indexes are BTree indexes. Inserting mostly sequential
+values into a BTree means older pages of the index do not need to be accessed
+for writes and new values are inserted into a small set of pages reducing the
+required disk write operations.
+
+By contrast, if a wholly random, application-assigned value is used for `_id`
+like a UUID then each new value may need to read or write any part of the index
+resulting in far more dirty blocks to be written to disk and more RAM required
+to cache it.
+
+In the middle ground an application assigned _id May have an initial semi-random
+portion such as an account ID or Customer ID followed by a timestamp. In this
+case there will be one active index page per user.
+
+In this test case our business _id is a string starting with "ACC" followed by
+5 digits for the account and 8 hex characters for the timestamp. We insert 24
+Million 1KB documents and measure the speed of each variant. The insert batch
+size was 1,000.
+
+We try to keep the indexed keys of comparable size.
 
 ### Performance
 

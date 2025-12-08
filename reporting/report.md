@@ -9,23 +9,32 @@ Ignore content for now.
 | **Date**    | 2020-09-22 |
 | **Version** | 0.1        |
 
-## About this document
+## TLDR;
+
+This document shows the performance you can expect from MongoDB on a given
+hardware infrastructure. You can use it to compare the performance of your own
+client code and to determine the hardware required or a given performance
+target. It highlights the impact of various parameters on the performance of
+MongoDB.
+
+## Introduction
 
 This document shows the expected performance of MongoDB when performing a given
-task. Each table shows the impacton performance when changing parameters. For
-example, adding an index. This is testing only Database performance, you should
-assume that the client is using MongoDB optimally and that there are no network
-constraints between client and server.
+task. Each table shows the impact on the performance of changing individual test
+parameters. For example, adding an index. This is testing only database
+performance, you should assume that the client is using MongoDB optimally and
+that there are no network constraints between client and server unless the test
+explicitly says otherwise.
 
 Unless otherwise specified, the database tested is a 3-node Replica Set in
-MongoDB Atlas using an M30 (2 x vCPU, 8GB RAM, 2GB configured as Cache). This is
-using default of 3,000 IOPS on Amazon Web Services. Writes are using write
-concern majority, all reads
-are from the primary.
+MongoDB Atlas using an M40 (4 vCPU, 16GB RAM, 8GB configured as database
+cache). This is using default of 3,000 Standard IOPS on Amazon Web Services
+with a 200 GB disk. Writes are using write concern majority, all reads are from
+the primary. The test harness is running in the same cloud provider region.
 
 In MongoDB, you can scale vertically by using larger hardware but also
-horizontally by adding more replica sets, many workloads will scale linearly to
-1000's of times the throughput shown here.
+horizontally by adding more replica sets, most workloads will scale linearly to
+thousands of times the performance shown here via sharding.
 
 The intent of this document is to assist in understanding the approximate
 expected performance of MongoDB. This information can be used either to verify
@@ -39,11 +48,11 @@ that. Notes will be supplied with each test where the results show something of
 significance.
 
 The performance of MongoDB or any database will depend on the available CPU and
-Disk I/O capability. Available RAM will further reduce the amount of Disk I/O
-required by caching and amortizing write requests where safe to do so. This
-assumes an ideal client as used in most of these cases, however, some client
-constructs and then require more work per write operation by the server, which
-is demonstrated in later examples.
+Disk performance. Available RAM will further reduce the number of Disk
+operations required by caching and amortizing write requests where safe to do
+so. This assumes an ideal client as used in most of these cases, however, some
+client constructs and then require more work per write operation by the server,
+which is demonstrated in later examples.
 
 The author has tried to include explanations for the results and the underlying
 low-level behavior that makes them so with each example.
@@ -51,56 +60,83 @@ low-level behavior that makes them so with each example.
 # Data Ingestion
 
 This section covers getting data from outside MongoDB into MongoDB. Either data
-known to be new or data where some records are new, doem are modified and others
-are identical to existing records, existing in this case being based on a known
-key field.
+known to be new or data where some records are new, some are modified and others
+are identical to existing records; Existing in this case being determined by a
+unique key field value.
 
-## Impact of document size on insert speed
+## Expected insert speed by document size
 
 ### Description
 
-This shows how the document size impacts the speed in MB/s when using `insert`
+This shows how the document size impacts the write speed in MB/s when using
+`insert`
 operations to add documents and assign them a primary key. In the test 24 GB of
 data was bulk inserted into an empty collection. The only index is the _id index
-with the default ObjectID(), in this was only a small set of database blocks
-are being written to at any one time, so nearly all writes to the database are
-appended with minimal random I/O and maximal use of IOPS.
+with the default ObjectID().
 
-Data like this is very quick to write, but without additional indexes it can
+Data like this is efficient to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
-logging use cases.
+simple use cases.
 
 ### Performance
 
 | Document Size (KB) | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) |
 | --: | --: | --: | --: | --: |
-| 1 | 411 | 24576 | 61248 | 61.25 |
-| 4 | 351 | 24576 | 17929 | 71.72 |
-| 32 | 322 | 24576 | 2442 | 78.15 |
-| 256 | 333 | 24576 | 295 | 75.52 |
-| 2048 | 321 | 24576 | 38 | 78.49 |
+| 1 | 238 | 24576 | 105842 | 105.84 |
+| 4 | 202 | 24576 | 31098 | 124.39 |
+| 32 | 190 | 24576 | 4148 | 132.74 |
+| 256 | 180 | 24576 | 546 | 139.8 |
+| 2048 | 171 | 24576 | 72 | 147.5 |
   
 
 ### Resource Usage
 
 | Document Size (KB) | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 73 | 0 | 27 | 79199 | 37811 | 508 | 113 | 0 |
-| 4 | 70 | 0 | 37 | 90122 | 42479 | 576 | 126 | 0 |
-| 32 | 66 | 0 | 36 | 93548 | 44725 | 610 | 133 | 0 |
-| 256 | 62 | 11 | 32 | 85306 | 41978 | 556 | 121 | 1 |
-| 2048 | 60 | 15 | 10 | 86993 | 42083 | 559 | 119 | 6 |
+| 1 | 57 | 6 | 11 | 136104 | 65341 | 861 | 192 | 0 |
+| 4 | 48 | 6 | 18 | 155925 | 73681 | 1006 | 221 | 0 |
+| 32 | 46 | 8 | 21 | 158166 | 75969 | 1046 | 224 | 1 |
+| 256 | 35 | 9 | 20 | 157333 | 77706 | 1080 | 223 | 0 |
+| 2048 | 34 | 14 | 6 | 160693 | 79080 | 1078 | 224 | 1 |
   
 
 ### Analysis
 
-With small document, there are considerably more index entries for the primary
-key which we can assume adds some CPU overhead even when they are essentially
-sequential. The default volumnes used for these tests are AWS GP3 which have
-3,000 IOPS and 125MIB/S write speed. As each inserted document needs to be
-inserted in the Oplog, the Write-ahead-log (journal) and the collection we can
-see that we are hitting this limit even though we are using only about 18% of
-IOPS.
+We see that we can write >100,000 1KB documents per second on what is a
+relatively
+small server, although with so many individual documents the overheads of
+indexing
+increase the CPU usage. We are also capped with these small documents by a
+combination of client threads and network trips with significant time lost to
+network latency.
+
+Once we move to 4KB documents, we are writing more efficiently, the CPU drops
+to <50% of our 4 cores, and the total MB/s being written rises to 125MB/s when
+measured as JSON documents. The limit if MB/s written and so the inserts per
+second drop proportionally with the document size.
+
+Looking at the resource usage, we can see we are not using 100% of CPU and are
+ony using about 33% of our available IOPS. We can assume we are not network or
+client CPU constrained here, so what is limiting our writer throughput?
+
+The answer is the disk throughput. With "Standard" gp3 disks we are limited to
+125MB/s for any drive <170GB. This then goes up at 5MB/s per additional 10GB up
+to 260GB. Thereafter, rising at 1MB/s per additional 10GB.
+
+Out 200GB volume has a maximum write throughput of 125 + 85M + 15 = 225MB/s and
+this is what limits our total write speed.
+
+Each inserted document is compressed and then needs to be inserted in the Oplog,
+the Write-Ahead Log (journal) and the collection. We can see that we are hitting
+this limit even though we are using only about 33% of IOPS. Out 150MB/s of JSON
+becomes 450MB/s of uncompressed writes and ~225MB/s of compressed writes
+
+### Key Takeaways
+
+* It is important to think of write speed in MB/s not Inserts/s.
+* The limit to writes on Atlas is most commonly disk throughput — not IOPS.
+* Small disks (<170GB) are limited to 125MB/s, which is about 60MB/s of writes.
+* Each CPU core can write approx 60MB/s of data.
 
 ## Impact of client write batch size on write speed
 
@@ -133,22 +169,22 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
 | Write Batch Size | Time Taken (s)  | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| 1 | 1594 | 24576 | 3947 | 15.79 | 9 |
-| 10 | 536 | 24576 | 11742 | 46.97 | 34 |
-| 100 | 407 | 24576 | 15456 | 61.83 | 269 |
-| 1000 | 354 | 24576 | 17759 | 71.04 | 2321 |
-| 2000 | 356 | 24576 | 17695 | 70.78 | 5074 |
+| 1 | 1038 | 24576 | 6063 | 24.25 | 6 |
+| 10 | 292 | 24576 | 21583 | 86.33 | 15 |
+| 100 | 235 | 24576 | 26816 | 107.27 | 33 |
+| 1000 | 194 | 24576 | 32424 | 129.7 | 747 |
+| 2000 | 199 | 24576 | 31667 | 126.67 | 1874 |
   
 
 ### Resource Usage
 
 | Write batch size | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 | 71 | 6 | 52 | 21753 | 11071 | 618 | 32 | 0 |
-| 10 | 66 | 8 | 107 | 61113 | 28274 | 548 | 85 | 0 |
-| 100 | 67 | 5 | 78 | 78430 | 36658 | 514 | 109 | 1 |
-| 1000 | 70 | 7 | 210 | 89599 | 42078 | 571 | 124 | 1 |
-| 2000 | 73 | 5 | 278 | 89036 | 41925 | 569 | 124 | 1 |
+| 1 | 70 | 4 | 44 | 32868 | 17006 | 1066 | 49 | 0 |
+| 10 | 58 | 6 | 87 | 110226 | 51971 | 1012 | 155 | 0 |
+| 100 | 46 | 5 | 66 | 134799 | 63601 | 978 | 194 | 0 |
+| 1000 | 47 | 14 | 304 | 161111 | 76825 | 1112 | 223 | 2 |
+| 2000 | 43 | 19 | 184 | 159314 | 75028 | 1089 | 222 | 3 |
   
 
 ### Analysis
@@ -200,18 +236,18 @@ insert batch size was 1,000.
 
 | Primary Key format | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 485 | 24576 | 51917 | 51.92 | 165 |
-| UUID | 1218 | 24576 | 20657 | 20.66 | 515 |
-| BUSINESS_ID | 1198 | 24576 | 21003 | 21 | 507 |
+| OBJECT_ID | 261 | 24576 | 96333 | 96.33 | 84 |
+| UUID | 263 | 24576 | 95678 | 95.68 | 83 |
+| BUSINESS_ID | 263 | 24576 | 95704 | 95.7 | 84 |
   
 
 ### Resource Usage
 
 | Primary Key format | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 69 | 5 | 22 | 66235 | 31590 | 459 | 93 | 1 |
-| UUID | 91 | 1 | 8974 | 152368 | 12804 | 971 | 103 | 0 |
-| BUSINESS_ID | 92 | 0 | 6010 | 118000 | 12866 | 381 | 58 | 0 |
+| OBJECT_ID | 47 | 7 | 21 | 124236 | 59517 | 877 | 175 | 0 |
+| UUID | 47 | 7 | 23 | 124013 | 59112 | 905 | 178 | 0 |
+| BUSINESS_ID | 47 | 8 | 22 | 124494 | 59127 | 908 | 177 | 0 |
   
 
 ### Analysis
@@ -249,26 +285,26 @@ simple integer fields in each. The load batch size is 1,000.
 
 | Number of secondary indexes | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| 0 | 203 | 12857 | 16201 | 64.8 | 506 |
-| 1 | 283 | 12857 | 11617 | 46.47 | 744 |
-| 2 | 386 | 12857 | 8534 | 34.14 | 1076 |
-| 3 | 549 | 12857 | 5997 | 23.99 | 1615 |
-| 4 | 802 | 12857 | 4105 | 16.42 | 2407 |
-| 8 | 2689 | 12857 | 1224 | 4.9 | 7822 |
-| 16 | 6908 | 12857 | 476 | 1.91 | 18764 |
+| 0 | 103 | 12857 | 31837 | 127.35 |  |
+| 1 | 123 | 12857 | 26652 | 106.61 |  |
+| 2 | 131 | 12857 | 25106 | 100.42 | 305 |
+| 3 | 143 | 12857 | 22955 | 91.82 | 318 |
+| 4 | 152 | 12857 | 21631 | 86.52 | 352 |
+| 8 | 346 | 12857 | 9513 | 38.05 | 882 |
+| 16 | 1247 | 12857 | 2640 | 10.56 | 3843 |
   
 
 ### Resource Usage
 
 | Number of secondary Indexes | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| 0 | 58 | 7 | 28 | 81579 | 38384 | 516 | 114 | 1 |
-| 1 | 72 | 0 | 3015 | 108673 | 27525 | 487 | 93 | 1 |
-| 2 | 81 | 0 | 4394 | 103358 | 20220 | 407 | 77 | 0 |
-| 3 | 87 | 0 | 5459 | 103360 | 14208 | 344 | 61 | 0 |
-| 4 | 91 | 0 | 6054 | 102429 | 9726 | 273 | 49 | 0 |
-| 8 | 93 | 0 | 5556 | 88032 | 2900 | 228 | 32 | 0 |
-| 16 | 94 | 0 | 5638 | 83196 | 1129 | 819 | 49 | 0 |
+| 0 | 0 |  | 16 | 159326 | 75432 |  |  |  |
+| 1 | 0 |  | 1189 | 209107 | 63148 |  |  |  |
+| 2 | 45 | 2 | 4678 | 229596 | 59484 | 1153 | 208 | 1 |
+| 3 | 47 | 1 | 6487 | 216291 | 54389 | 1472 | 212 | 0 |
+| 4 | 47 | 1 | 7281 | 211487 | 51251 | 1885 | 213 | 1 |
+| 8 | 72 | 1 | 10479 | 197244 | 22540 | 1784 | 145 | 0 |
+| 16 | 91 | 0 | 11900 | 181037 | 6254 | 2229 | 136 | 0 |
   
 
 ## Standard vs Provisioned IOPS and Throughput
@@ -294,6 +330,7 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 | Disk Specification | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
 | PROVISIONED (60GB@3000IOPS) | 804 | 12857 | 4096 | 16.38 | 2463 |
+| STANDARD (200GB@3000IOPS) | 150 | 12857 | 21939 | 87.76 |  |
 | STANDARD (2048GB@6000IOPS) | 810 | 12857 | 4064 | 16.26 | 2466 |
 | STANDARD (60GB@3000IOPS) | 833 | 12857 | 3953 | 15.81 | 2515 |
   
@@ -303,6 +340,7 @@ IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | PROVISIONED (60GB@3000IOPS) | 91 | 0 | 5960 | 102477 | 9704 | 254 | 47 | 0 |
+| STANDARD (200GB@3000IOPS) | 47 | 0 | 5664 | 191388 | 51981 | 2026 | 213 | 0 |
 | STANDARD (2048GB@6000IOPS) | 91 | 0 | 5912 | 100851 | 9629 | 257 | 48 | 0 |
 | STANDARD (60GB@3000IOPS) | 92 | 0 | 6181 | 102807 | 9366 | 254 | 47 | 0 |
   
@@ -326,10 +364,15 @@ In these tests we are using 2000 provisioned IOPS.
 | Instance Type | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
 | M30 | 5088 | 46875 | 2358 | 9.43 | 10806 |
+| M30 | 4888 | 46875 | 2455 | 9.82 | 10113 |
 | M40 | 703 | 46875 | 17072 | 68.29 | 1292 |
+| M40 | 698 | 46875 | 17181 | 68.72 | 1325 |
 | M50 | 432 | 46875 | 27772 | 111.09 | 778 |
+| M50 | 326 | 46875 | 36831 | 147.33 | 469 |
 | M60 | 362 | 46875 | 33182 | 132.73 | 622 |
+| M60 | 282 | 46875 | 42516 | 170.07 | 348 |
 | M80 | 239 | 46875 | 50275 | 201.1 | 297 |
+| M80 | 199 | 46875 | 60153 | 240.61 | 218 |
   
 
 ### Resource Usage
@@ -337,10 +380,15 @@ In these tests we are using 2000 provisioned IOPS.
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | M30 | 92 | 0 | 5133 | 87797 | 5588 | 409 | 47 | 0 |
+| M30 | 96 | 0 | 5470 | 90152 | 5817 | 453 | 50 | 0 |
 | M40 | 87 | 0 | 7815 | 193188 | 40449 | 2436 | 197 | 1 |
+| M40 | 88 | 0 | 8388 | 200017 | 40709 | 2674 | 201 | 0 |
 | M50 | 40 | 17 | 6144 | 218253 | 65804 | 2881 | 249 | 0 |
+| M50 | 52 | 10 | 8012 | 295582 | 87268 | 4582 | 323 | 9 |
 | M60 | 23 | 11 | 4840 | 288562 | 78621 | 3157 | 284 | 0 |
+| M60 | 29 | 7 | 7568 | 388929 | 100738 | 2794 | 373 | 4 |
 | M80 | 13 | 7 | 4125 | 349582 | 119119 | 2554 | 350 | 0 |
+| M80 | 7 | 10 | 4526 | 379435 | 142527 | 3736 | 354 | 0 |
   
 
 ## Impact of hot documents and concurrency on write performance
