@@ -5,8 +5,8 @@
   "collection": "inserts",
   "docSizeKB": 1.0,
   "generatePerVariant": true,
-  "initialDocsToInsert": 10000,
-  "totalDocsToInsert": 10000,
+  "initialDocsToInsert": 20000000,
+  "totalDocsToInsert": 40000000,
   "writeBatchSize": 1000,
   "variants": [
     {

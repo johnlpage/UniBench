@@ -50,9 +50,6 @@ public class DocumentFactory {
     return createDocument(null);
   }
 
-  // TODO - Figure out what wa want to control in our document
-  // Size, NFields and Depth I guess
-  // We want ot be able to generate data very fast but pseudo random
   public RawBsonDocument createDocument(Document extraFields) {
 
     BasicOutputBuffer buffer = new BasicOutputBuffer();
@@ -60,7 +57,7 @@ public class DocumentFactory {
     int fNo = 1;
 
     writer.writeStartDocument();
-    if (idType != null && extraFields != null && !extraFields.containsKey("_id")) {
+    if (idType != null && !(extraFields != null && extraFields.containsKey("_id"))) {
 
       switch (idType) {
         case "UUID":
@@ -72,7 +69,7 @@ public class DocumentFactory {
           int cust = random.nextInt(20000);
           int custOneUp = map.getOrDefault(cust, 0);
           map.put(cust, custOneUp + 1);
-          String busId = String.format("ACC%05dx_%06x%02x", cust, custOneUp, threadNo);
+          String busId = String.format("ACC%05d_%06x%03x", cust, custOneUp, threadNo);
           writer.writeString("_id", busId);
           break;
         case "OBJECT_ID":

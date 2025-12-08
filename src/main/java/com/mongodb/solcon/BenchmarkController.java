@@ -134,13 +134,18 @@ public class BenchmarkController {
       @SuppressWarnings("rawtypes")
       Class testClass = Class.forName(testConfig.getString("testClassName"));
       testConfig.put("variant", new Document());
+      // 4095 as thread Id in case its use in id generation
       BaseMongoTest test =
           (BaseMongoTest)
               testClass.getDeclaredConstructors()[0].newInstance(
-                  mongoClient, testConfig, 0, 0, null);
+                  mongoClient, testConfig, 0, 4095, null);
 
       // If data needs generated (or verified), do it in the test class here
-      test.GenerateData();
+      if (testConfig.getBoolean("generatePerVariant", false) == false) {
+        test.GenerateData();
+      } else {
+        logger.info("Skipping up front data generation as data generated per variant");
+      }
       // If the data exists wut we want to do any warm-up of caches, then do it here
       test.WarmCache();
 
@@ -157,7 +162,7 @@ public class BenchmarkController {
           Document instance = variant.get("instance", Document.class);
           String atlasInstanceType = instance.getString("atlasInstanceType");
           int iops = instance.getInteger("atlasIOPS", 3000);
-          int disksize = instance.getInteger("atlasDiskSizeGB", 60);
+          int disksize = instance.getInteger("atlasDiskSizeGB", 200);
           String diskType = instance.getString("atlasDiskType");
           if (diskType == null) {
             diskType = "STANDARD ";
@@ -165,9 +170,11 @@ public class BenchmarkController {
           atlasClusterManager.modifyCluster(
               testClusterName, atlasInstanceType, diskType, disksize, iops);
         }
+
         /* We can change threads by variant */
 
         test.TestReset();
+
         if (variant.containsKey("numberOfThreads")) {
           numberOfThreads = variant.getInteger("numberOfThreads");
         }

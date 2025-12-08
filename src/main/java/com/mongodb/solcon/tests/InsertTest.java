@@ -45,6 +45,12 @@ public class InsertTest extends BaseMongoTest {
       ConcurrentHashMap<String, Object> testReturnInfo) {
     super(client, config, nThreads, threadNo, testReturnInfo);
 
+    parseTestParams();
+  }
+
+  public void parseTestParams() {
+    Document variant = testConfig.get("variant", Document.class);
+
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
     generatePerVariant = testConfig.getBoolean("generatePerVariant", false);
@@ -57,21 +63,13 @@ public class InsertTest extends BaseMongoTest {
       initialCollection = collection;
     }
 
-    parseTestParams();
     maxFieldsPerObject =
         Objects.requireNonNullElse(testConfig.getInteger("maxFieldsPerObject"), 200);
-    docFactory = new DocumentFactory(threadNo, idType, docsizeBytes, maxFieldsPerObject);
-  }
-
-  void parseTestParams() {
-    Document variant = testConfig.get("variant", Document.class);
 
     idType = testConfig.getString("idType");
     if (variant != null && variant.getString("idType") != null) {
       idType = variant.getString("idType");
     }
-    docFactory = new DocumentFactory(threadNo, idType, docsizeBytes, maxFieldsPerObject);
-    // Allow variation of batch size
 
     writeBatchSize = testConfig.getInteger("writeBatchSize", 1000);
     if (variant != null && variant.getInteger("writeBatchSize") != null) {
@@ -97,6 +95,8 @@ public class InsertTest extends BaseMongoTest {
     if (variant != null && variant.getInteger("totalDocsToInsert") != null) {
       totalDocsToInsert = variant.getInteger("totalDocsToInsert");
     }
+
+    docFactory = new DocumentFactory(threadNo, idType, docsizeBytes, maxFieldsPerObject);
   }
 
   public void run() {
@@ -145,7 +145,7 @@ public class InsertTest extends BaseMongoTest {
   // Reset is called for each variant
 
   public void GenerateData() {
-    parseTestParams();
+
     // If we have "initialDocsToInsert" then generate that many in a collection
     // During reset() we will copy that into the test table - this is meaningful
     // When talking about indexes. Where an empty index is much less expensive
@@ -190,6 +190,7 @@ public class InsertTest extends BaseMongoTest {
   }
 
   public void TestReset() {
+    // Get all correct setup on reset
     parseTestParams();
 
     logger.info("Dropping {}", collection.getNamespace());
