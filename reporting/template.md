@@ -278,10 +278,10 @@ batches.
 
 ### Analysis
 
-With the 48 threads we have we see that individual writes (batch size 1) it
-throttled by network hops and disk flushes to only 6,000 inserts per second - by
-batching we get this up to just over 32,000 inserts/second. We are at this
-point hitting the 225/s write limit of our Disk.
+With 48 threads we see that individual writes (batch size 1) are throttled by
+network hops and disk flushes to only 6,000 inserts per second. By batching we
+get this up to just over 32,000 inserts/second. We are at this point hitting the
+225/s write limit of our Disk.
 
 We can see that the optimal bulk insertion size here is 1,000 documents with a
 slight drop in speed at 2,000. Notably, the IOPS is a little higher for the
@@ -289,10 +289,10 @@ single inserts even though the throughput is lower, this is because there are
 extra writes/flushes required to make each record separately durable, there is a
 lack of amortization of resources.
 
-Batches of 1,000 are good for a bulk ingestion but in a continuous ingestion
+Batches of 1,000 are good for bulk ingestion, but in a continuous ingestion
 scenario where we may be waiting in the client to build us a set to send the
-750ms latency for 1,000 documents is quite high ( although with parallel threads
-it still allows good throughput) - smaller batches betwen 10 and 100 give far
+~750ms latency for 1,000 documents is quite high (although with parallel threads
+it still allows good throughput)—smaller batches between 10 and 100 give far
 lower latency per individual write at the expense of lower throughput.
 
 ### Key Takeaways
@@ -309,7 +309,8 @@ lower latency per individual write at the expense of lower throughput.
 This test looks at the impact of using an ObjectID vs. a random GUID versus an
 id constructed from AccountId and Timestamp such as you might use to record a
 financial transaction. This value being the uniquely indexed primary key used to
-identify documents.
+identify documents. We first insert 50 Million 1KB documents and then measure
+the time to add 50 million more once the index is a non-empty state.
 
 All Documents in MongoDB have a primary key defined as the first field in the
 document, this field is always called `_id`. Where the application does not

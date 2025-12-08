@@ -31,20 +31,31 @@ public class InsertTest extends BaseMongoTest {
   int maxFieldsPerObject;
   String idType;
   int docsizeBytes = 2048;
-
+  boolean generatePerVariant = false;
   DocumentFactory docFactory = null;
 
   /* A FieldSet is a combination of an Integer, a Date and a String - The strings can very in length uniformly*/
   /* We use this set of 3 fields repeated in our documents */
 
-  public InsertTest(MongoClient client, Document config, long nThreads, long threadNo, ConcurrentHashMap<String, Object> testReturnInfo) {
-    super(client, config, nThreads, threadNo,testReturnInfo);
+  public InsertTest(
+      MongoClient client,
+      Document config,
+      long nThreads,
+      long threadNo,
+      ConcurrentHashMap<String, Object> testReturnInfo) {
+    super(client, config, nThreads, threadNo, testReturnInfo);
 
     database = mongoClient.getDatabase(testConfig.getString("database"));
     collection = database.getCollection(testConfig.getString("collection"), RawBsonDocument.class);
-    initialCollection =
-        database.getCollection(
-            testConfig.getString("collection") + "_initial", RawBsonDocument.class);
+    generatePerVariant = testConfig.getBoolean("generatePerVariant", false);
+
+    if (generatePerVariant == false) {
+      initialCollection =
+          database.getCollection(
+              testConfig.getString("collection") + "_initial", RawBsonDocument.class);
+    } else {
+      initialCollection = collection;
+    }
 
     parseTestParams();
     maxFieldsPerObject =
@@ -191,16 +202,21 @@ public class InsertTest extends BaseMongoTest {
     }
 
     int initialDocsToInsert = testConfig.getInteger("initialDocsToInsert", 0);
+
     if (initialDocsToInsert > 0) {
-      logger.info(
-          "Copying {} documents from initial collection to test collection",
-          initialCollection.estimatedDocumentCount());
-      initialCollection
-          .aggregate(
-              Arrays.asList(new Document("$out", collection.getNamespace().getCollectionName())))
-          .first();
-      logger.info(
-          "Copying complete:{} docs in test collection", collection.estimatedDocumentCount());
+      if (generatePerVariant) {
+        GenerateData();
+      } else {
+        logger.info(
+            "Copying {} documents from initial collection to test collection",
+            initialCollection.estimatedDocumentCount());
+        initialCollection
+            .aggregate(
+                Arrays.asList(new Document("$out", collection.getNamespace().getCollectionName())))
+            .first();
+        logger.info(
+            "Copying complete:{} docs in test collection", collection.estimatedDocumentCount());
+      }
     }
   }
 

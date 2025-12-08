@@ -4,6 +4,7 @@
   "database": "unibench",
   "collection": "inserts",
   "docSizeKB": 1.0,
+  "generatePerVariant": true,
   "initialDocsToInsert": 50331648,
   "totalDocsToInsert": 50331648,
   "writeBatchSize": 1000,
