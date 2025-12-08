@@ -10,8 +10,11 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DocumentFactory {
+  private static final Logger logger = LoggerFactory.getLogger(DocumentFactory.class);
   final int MEANSTRINGLENGTH = 32;
   final int SAMPLESTRINGLENGTH = 1024 * 1024;
   String bigrandomString;
@@ -72,8 +75,12 @@ public class DocumentFactory {
           String busId = String.format("ACC%05dx_%06x%02x", cust, custOneUp, threadNo);
           writer.writeString("_id", busId);
           break;
-        default:
+        case "OBJECT_ID":
           writer.writeObjectId("_id", new ObjectId());
+          break;
+        default:
+          logger.error("Unknown idType: " + idType);
+          writer.writeString("_id", "ERROR");
           break;
       }
     }
