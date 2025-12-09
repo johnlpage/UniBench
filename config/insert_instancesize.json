@@ -13,7 +13,7 @@
         "atlasInstanceType": "M30",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
-        "atlasDiskSizeGB": 512
+        "atlasDiskSizeGB": 200
       },
       "nSecondaryIndexes": 4
     },
