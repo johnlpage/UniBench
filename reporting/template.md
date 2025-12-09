@@ -78,6 +78,26 @@ Data like this is efficient to write, but without additional indexes it can
 only be efficiently retrieved using a single kay and is usually only useful for
 simple use cases.
 
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
+
 ### Performance
 
 <!-- MONGO_TABLE: 
@@ -206,6 +226,26 @@ additional latency.
 When processing single writes or smaller batches, you can use more threads/async
 to increase concurrency, but it is still far less efficient than even small
 batches.
+
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
 
 ### Performance
 
@@ -340,6 +380,26 @@ size was 1,000.
 
 We try to keep the indexed keys of comparable size.
 
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
+
 ### Performance
 
 <!-- MONGO_TABLE: 
@@ -439,6 +499,26 @@ indexes are the worst performing compared to sequential or recent-date indexes.
 We preload 3 million 4KB documents then measure loading the next 3 million, and
 index N simple integer fields in each. The load batch size is 1,000.
 
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
+
 ### Performance
 
 <!-- MONGO_TABLE: 
@@ -535,19 +615,35 @@ latency with even 16 inexes when writing individual documents.
 
 ### Description
 
-Where a workload is I/O bound, then boht the number of write operations and the
-total disk bandwidth are the factor limiting performance. Standard IOPS have a
-hard throughput limit of 125MB/s in Atlas (AWS), Provisioned IOPS scale the
-throughput with the number of IOPS. This test looks at the implications
-ofStandard vs Provisioned IOPS for read and write performance.
+If a workload is I/O bound, then either the number of write operations or the
+total write throughput may be the factor limiting performance. Standard IOPS
+have a hard throughput limit as described above in Atlas (AWS), Provisioned
+IOPS scale the throughput with the number of IOPS. This test looks at the
+implications of Standard vs Provisioned IOPS for read and write performance.
 
-In this test We preload 3M x 4KB document then measure loading the next 3M with
+In this test We load 30 million 4KB documents with
 4 secondary indexes comparing the implications of Standard(gp3) vs.
-Provisioned (io2) classs IOPS and different numbers of IOPS. By default, all
-these tests are run on an M30 AWS instance. On an M30 the maximum number of
-provisioned IOPS is 3,000 so this tests 3,000 standard IOPS, 3,000 provisioned
-IOPS and 6,000 standard IOPS achieved by increasing the disk size from 60GB to
-2TB.
+Provisioned (io2)  IOPS and different numbers of provisioned IOPS.
+
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
 
 ### Performance
 

@@ -10,7 +10,7 @@
   "variants": [
     {
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 200,
@@ -21,7 +21,7 @@
     },
     {
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 1500,
         "atlasDiskSizeGB": 200,
@@ -32,7 +32,7 @@
     },
     {
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 200,
@@ -43,7 +43,7 @@
     },
     {
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 4500,
         "atlasDiskSizeGB": 200,
@@ -53,7 +53,7 @@
     },
     {
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 6000,
         "atlasDiskSizeGB": 200,

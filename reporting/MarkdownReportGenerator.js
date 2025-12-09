@@ -124,5 +124,6 @@ if (args.length < 2) {
 const template = args[0]
 const output = args[1] || args[0].replace('.md', '-output.md')
 
+
 const generator = new MarkdownReportGenerator(mongoUri, dbName);
 await generator.generateReport(template, output);  
