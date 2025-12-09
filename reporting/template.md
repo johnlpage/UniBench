@@ -6,8 +6,8 @@ Ignore content for now.
 
 | Author      | John Page  |
 |-------------|------------|
-| **Date**    | 2020-09-22 |
-| **Version** | 0.1        |
+| **Date**    | 2025-12-09 |
+| **Version** | 0.2        |
 
 ## TLDR;
 
