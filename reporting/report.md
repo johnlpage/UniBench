@@ -142,28 +142,27 @@ becomes 450MB/s of uncompressed writes and ~225MB/s of compressed writes
 
 ### Description
 
-MongoDB allows you to send multiple write operations to the database in a single
-network request. As of MongoDB 8.0 these can even be writes to different
-colleciotns.
-Conversely, when using simply insertOne(), replaceOne() ( or save() in Spring
-Data) then each document is sent individually. This not only incurs a network
-round trip per document but also needs each document to independently
-wait for durability, requiring a network round trip to a secondary and awaiting
-a periodic disk flush on the secondary and primary.
+In this test we insert 24GB of data (6.2 Million 4 KB documents) using
+differing network write batch sizes to illustrate the impact batching writes for
+ingestion. We use 48 threads loading in parallel.
 
-When you send multiple write operations in a single network call, then the cost
-of
-the durability is shared between all the documents; there can be a
-little overhead for a larger batch whilst waiting for the whole batch to be
+MongoDB allows you to send multiple write operations to the database in a single
+network request. From MongoDB 8.0 onwards these can even be written to different
+collections. Conversely, when using simple insertOne(), replaceOne() (Or save()
+in Spring Data) then each document is sent individually. This not only incurs a
+network round trip per document but also needs each document to independently
+wait for durability, awaiting a periodic disk flush on the secondary and
+primary.
+
+When you send multiple write operations as a single network call, then the
+overhead of the durability is shared between all the documents; there can be a
+little cpu overhead for a larger batch whilst waiting for the whole batch to be
 processed, this still results in much higher throughput, albeit with some
 additional latency.
 
 When processing single writes or smaller batches, you can use more threads/async
-toincrease concurrency, but it is still far less efficient.
-
-In this test we insert 24GB of data ( 6.2 Million 4 KB documents ) using
-differing network write batch sizes to illustrate the impact of not incorrectly
-batching writes for ingestion. We use 48 threads loading in parallel.
+to increase concurrency, but it is still far less efficient than even small
+batches.
 
 ### Performance
 
@@ -189,65 +188,84 @@ batching writes for ingestion. We use 48 threads loading in parallel.
 
 ### Analysis
 
-With the 48 threads we have we see that individual writes (batch size 1) it
-throttled by network hops and disk flushes to <4000 inserts per second - by
-batching we get this up to just under 18,000 inserts/second. We are at this
-point hitting the 125MB/s write limit of the AWS GP3 volume.
+With 48 threads we see that individual writes (batch size 1) are throttled by
+network hops and disk flushes to only 6,000 inserts per second. By batching we
+get this up to just over 32,000 inserts/second. We are at this point hitting the
+225/s write limit of our Disk.
 
 We can see that the optimal bulk insertion size here is 1,000 documents with a
-slight drop in speed at 2,000. Notably the IOPS is a little higher for the
+slight drop in speed at 2,000. Notably, the IOPS is a little higher for the
 single inserts even though the throughput is lower, this is because there are
 extra writes/flushes required to make each record separately durable, there is a
 lack of amortization of resources.
+
+Batches of 1,000 are good for bulk ingestion, but in a continuous ingestion
+scenario where we may be waiting in the client to build us a set to send the
+~750ms latency for 1,000 documents is quite high (although with parallel threads
+it still allows good throughput)—smaller batches between 10 and 100 give far
+lower latency per individual write at the expense of lower throughput.
+
+### Key Takeaways
+
+* Avoid sending individual write to the database if latency allows.
+* Consider queueing in the client and sending documents in small batches.
+* When loading a large data set, use batches of between 4 and 10MB in size.
+* MongoDB can process batches in parallel so do not send them serially.
 
 ## Impact of primary key type on write speed
 
 ### Description
 
-All Documents in MongoDB ha a primary key defined as the first field inthe
-document, this field is always called `_id`. Where the application does not
-supply it then the default value is assigned, a Unique ObjectId() value -
-ObjectID is a 12 byte GUID where the firat 4 bytes are the time in seconds since
-1970, these are therefore approximately sequential.
-
-The `_id` index is a BTree index, inserting mostly sequential values means older
-parts of the index do not need to be acessed for writes and new values are
-inserted into a small set of blocks reducing the write I/O
-
-By contrast, if a wholly random value is used for `_id` like a UUID then each
-new value may need to read or write any part of the index resulting in far more
-dirty blocks to be written to disk and more RAM required to cache it.
-
-In the middle ground an ID May have an inituial portion such as an account ID or
-Customer ID followed by a timestamp - in this case there will be one active
-block per user.
-
-This test looks at the impact of using an ObjectID vs a random UUID versus a
-typical
+This test looks at the impact of using an ObjectID vs. a random GUID versus an
 id constructed from AccountId and Timestamp such as you might use to record a
-financial
-transaction (BUSINESS_ID). In the Oatter case the id is a string srting with ACC
-followed by
-5 digits for the account and 8 hex characters for the timestamp.
-We insert 24 Million 1KB documents and measure the speed of each variant. The
-insert batch size was 1,000.
+financial transaction. This value being the uniquely indexed primary key used to
+identify documents. We first insert 50 Million 1KB documents and then measure
+the time to add 50 million more once the index is a non-empty state.
+
+All Documents in MongoDB have a primary key defined as the first field in the
+document, this field is always called `_id`. Where the application does not
+supply it, then the client assigns a unique value. The data type of this
+auto-assigned value is ObjectId. An ObjectID is a 12-byte GUID where the first 4
+bytes are the time in seconds since 1970, these are therefore approximately
+sequential.
+
+In MongoDB all database indexes are BTree indexes. Inserting mostly sequential
+values into a BTree means older pages of the index do not need to be accessed
+for writes and new values are inserted into a small set of pages reducing the
+required disk write operations.
+
+By contrast, if a wholly random, application-assigned value is used for `_id`
+like a UUID then each new value may need to read or write any part of the index
+resulting in far more dirty blocks to be written to disk and more RAM required
+to cache it.
+
+In the middle ground an application assigned _id May have an initial semi-random
+portion such as an account ID or Customer ID followed by a timestamp. In this
+case there will be one active index page per user.
+
+In this test case our business _id is a string starting with "ACC" followed by
+5 digits for the account and 8 hex characters for the timestamp. We insert 24
+Million 1KB documents and measure the speed of each variant. The insert batch
+size was 1,000.
+
+We try to keep the indexed keys of comparable size.
 
 ### Performance
 
 | Primary Key format | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 261 | 24576 | 96333 | 96.33 | 84 |
-| UUID | 263 | 24576 | 95678 | 95.68 | 83 |
-| BUSINESS_ID | 263 | 24576 | 95704 | 95.7 | 84 |
+| BUSINESS_ID | 505 | 41016 | 83205 | 83.21 | 223 |
+| OBJECT_ID | 421 | 41016 | 99764 | 99.76 | 171 |
+| UUID | 1017 | 41016 | 41298 | 41.3 | 476 |
   
 
 ### Resource Usage
 
 | Primary Key format | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| OBJECT_ID | 47 | 7 | 21 | 124236 | 59517 | 877 | 175 | 0 |
-| UUID | 47 | 7 | 23 | 124013 | 59112 | 905 | 178 | 0 |
-| BUSINESS_ID | 47 | 8 | 22 | 124494 | 59127 | 908 | 177 | 0 |
+| BUSINESS_ID | 81 | 1 | 3942 | 163541 | 50964 | 2589 | 183 | 1 |
+| OBJECT_ID | 60 | 4 | 24 | 126911 | 60718 | 918 | 180 | 1 |
+| UUID | 83 | 3 | 13439 | 246706 | 25597 | 3154 | 221 | 0 |
   
 
 ### Analysis

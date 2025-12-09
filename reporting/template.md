@@ -411,34 +411,33 @@ We try to keep the indexed keys of comparable size.
 
 ### Analysis
 
-As expected - the more random a value the slower it is to write as the index
-grows larger than RAM. What is not show here is that the UUID becomes ever
-slower over time as the index grows, the Business ID will stabilise.
+We can see from this data that where a unique identifier is required using an
+ObjectID, akin to a UUID v6 is much more efficient than a random traditional
+GUID. This is because the ObjectID is a 12-byte value that is approximately
+sequential and therefore does not need to fetch and rewrite older index pages as
+new documents are added. Although not quite as good as an ObjectId, a
+well-constructed business identifier can al act as a very efficient key.
 
-The Metrics returned for Write from cache are considerably higher than expected
-and to not tally with the bytes written to the disk by the OS, this is an
-indicaiton that this metric is not a direct indication of bytes flushed to disk,
-unlike the write to WAL metric.
+### Key Takeaways
 
-The Business ID seems to require about 65% of the reads into cache that the UUID
-does, but as expected far fewer blocks are dirtied when writing. With 20,000 '
-accounts'
-and only 24 million records, given the even distribution, it's possible that hat
-there are still no 'cold' blocks in the cache.
+* If you have a unique record identifier in your data that is meaningful to the
+  business, use that as the primary key for your data.
+* If you need a combination of fields as your primary identifier, can create a
+  second unique index to use and leave the _id as the default ObjectId very
+  cheaply
+* Avoid using and indexing UUID/GUID types as they have bad performance in a
+  BTree index.
 
 ## Impact of number of indexes on write speed
 
 ### Description
 
 This test shows how each additional index, on a field containing a random
-integer
-number impacts insert performance. As seen in the _id test abouve random indexes
-are
-the worst performing compated to sequential or recent-date indexes which are the
-best performing.
+integer number impacts insert performance. As seen in the _id test abouve random
+indexes are the worst performing compared to sequential or recent-date indexes.
 
-We preload 3M x 4KB document then measure loading the next 3M , and index N
-simple integer fields in each. The load batch size is 1,000.
+We preload 3 million 4KB documents then measure loading the next 3 million, and
+index N simple integer fields in each. The load batch size is 1,000.
 
 ### Performance
 
@@ -508,6 +507,29 @@ simple integer fields in each. The load batch size is 1,000.
     "headers": ["Number of secondary Indexes", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
 }
 -->  
+
+### Analysis
+
+We can see each additional index adds CPU overhead,and both read and write Disk
+operations.
+
+Starting from our baseline write speed of 128MB/s we see adding 4 indexes
+reduces write speed by roughly 30% and 8 by 70% whilst 16 indexes result in a
+92% performance reduction. The IOPS required rise although even with 16
+indexes, we are still requiring only 2,200 IOPS - less than the minimum provided
+on standard disks.
+
+We also see an impact on latency, but we are testing here with batches of 1,000
+so a high figure of 3,800ms ultimately translates to only a few 10s of ms of
+latency with even 16 inexes when writing individual documents.
+
+### Key Takeaways
+
+* You still need indexes to support all read operations so that determines how
+  many you need
+* You then need to size for that - having enough RAM for the index working set
+  is crucial
+*
 
 ## Standard vs Provisioned IOPS and Throughput
 

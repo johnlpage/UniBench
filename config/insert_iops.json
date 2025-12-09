@@ -1,11 +1,10 @@
 {
   "testClassName": "com.mongodb.solcon.tests.InsertTest",
-  "numberOfThreads": 10,
+  "numberOfThreads": 21,
   "database": "unibench",
   "collection": "inserts",
   "docSizeKB": 4.0,
-  "initialDocsToInsert": 3000000,
-  "totalDocsToInsert": 3291456,
+  "totalDocsToInsert": 30000000,
   "writeBatchSize": 1000,
   "variants": [
     {
@@ -13,16 +12,9 @@
         "atlasInstanceType": "M40",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3000,
-        "atlasDiskSizeGB": 200
-      },
-      "nSecondaryIndexes": 4
-    },
-    {
-      "instance": {
-        "atlasInstanceType": "M40",
-        "atlasDiskType": "STANDARD",
-        "atlasIOPS": 6000,
-        "atlasDiskSizeGB": 2048
+        "atlasDiskSizeGB": 200,
+        "teardown": true,
+        "price": 1.27
       },
       "nSecondaryIndexes": 4
     },
@@ -30,17 +22,10 @@
       "instance": {
         "atlasInstanceType": "M40",
         "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 1000,
-        "atlasDiskSizeGB": 200
-      },
-      "nSecondaryIndexes": 4
-    },
-    {
-      "instance": {
-        "atlasInstanceType": "M40",
-        "atlasDiskType": "PROVISIONED",
-        "atlasIOPS": 2000,
-        "atlasDiskSizeGB": 200
+        "atlasIOPS": 1500,
+        "atlasDiskSizeGB": 200,
+        "teardown": true,
+        "price": 1.90
       },
       "nSecondaryIndexes": 4
     },
@@ -49,7 +34,9 @@
         "atlasInstanceType": "M40",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
-        "atlasDiskSizeGB": 200
+        "atlasDiskSizeGB": 200,
+        "teardown": true,
+        "price": 2.50
       },
       "nSecondaryIndexes": 4
     },
@@ -58,7 +45,8 @@
         "atlasInstanceType": "M40",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 4500,
-        "atlasDiskSizeGB": 200
+        "atlasDiskSizeGB": 200,
+        "price": 3.10
       },
       "nSecondaryIndexes": 4
     },
@@ -67,7 +55,8 @@
         "atlasInstanceType": "M40",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 6000,
-        "atlasDiskSizeGB": 200
+        "atlasDiskSizeGB": 200,
+        "price": 3.70
       },
       "nSecondaryIndexes": 4
     }
