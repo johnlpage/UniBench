@@ -233,7 +233,7 @@ batches.
 {
   "collection": "results",
   "pipeline": [
-    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$match": {"_id.testname" : "insert_batchsize"}},
     {"$limit":1},
     {"$project": {
 "atlasInstanceType":"$bench_config.atlasInstanceType",
@@ -386,7 +386,7 @@ We try to keep the indexed keys of comparable size.
 {
   "collection": "results",
   "pipeline": [
-    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$match": {"_id.testname" : "insert_idtype"}},
     {"$limit":1},
     {"$project": {
 "atlasInstanceType":"$bench_config.atlasInstanceType",
@@ -493,10 +493,10 @@ well-constructed business identifier can al act as a very efficient key.
 ### Description
 
 This test shows how each additional index, on a field containing a random
-integer number impacts insert performance. As seen in the _id test abouve random
+integer number impacts insert performance. As seen in the _id test above random
 indexes are the worst performing compared to sequential or recent-date indexes.
 
-We preload 3 million 4KB documents then measure loading the next 3 million, and
+We preload 3 million 4KB documents, then measure loading the next 3 million, and
 index N simple integer fields in each. The load batch size is 1,000.
 
 ### Base Atlas Instance
@@ -505,7 +505,7 @@ index N simple integer fields in each. The load batch size is 1,000.
 {
   "collection": "results",
   "pipeline": [
-    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$match": {"_id.testname" : "insert_nindexes"}},
     {"$limit":1},
     {"$project": {
 "atlasInstanceType":"$bench_config.atlasInstanceType",
@@ -590,13 +590,13 @@ index N simple integer fields in each. The load batch size is 1,000.
 
 ### Analysis
 
-We can see each additional index adds CPU overhead,and both read and write Disk
+We can see each additional index adds CPU overhead, and both read and write Disk
 operations.
 
 Starting from our baseline write speed of 128MB/s we see adding 4 indexes
 reduces write speed by roughly 30% and 8 by 70% whilst 16 indexes result in a
-92% performance reduction. The IOPS required rise although even with 16
-indexes, we are still requiring only 2,200 IOPS - less than the minimum provided
+92% performance reduction. The IOPS required rise, although even with 16
+indexes, we are still requiring only 2,200 IOPS—less than the minimum provided
 on standard disks.
 
 We also see an impact on latency, but we are testing here with batches of 1,000
@@ -621,9 +621,10 @@ have a hard throughput limit as described above in Atlas (AWS), Provisioned
 IOPS scale the throughput with the number of IOPS. This test looks at the
 implications of Standard vs Provisioned IOPS for read and write performance.
 
-In this test We load 30 million 4KB documents with
+In this test we load 30 million 4KB documents with
 4 secondary indexes comparing the implications of Standard(gp3) vs.
 Provisioned (io2)  IOPS and different numbers of provisioned IOPS.
+We use an M50 to ensure sufficient CPU for the random indexes.
 
 ### Base Atlas Instance
 
@@ -631,7 +632,7 @@ Provisioned (io2)  IOPS and different numbers of provisioned IOPS.
 {
   "collection": "results",
   "pipeline": [
-    {"$match": {"_id.testname" : "insert_docsize"}},
+    {"$match": {"_id.testname" : "insert_iops"}},
     {"$limit":1},
     {"$project": {
 "atlasInstanceType":"$bench_config.atlasInstanceType",
@@ -718,6 +719,22 @@ Provisioned (io2)  IOPS and different numbers of provisioned IOPS.
     "headers": ["Disk Specification", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)","O/S Read (MB/s)"]
 }
 -->  
+
+### Analysis
+
+We have created a scenario here where every write has an impact on four random
+indexes, the indexes are larger that fit in RAM and so we are seeing a very
+significant amount of read-into-cache. Effectively we need the IOPS to support
+reading rather than writing as we have to read index blocks to modify them.
+
+This then allows us to write more so we see higher write IO but this is due to
+having more available for the required reads first.
+
+### Key Takeaways
+
+* IOPS should be though of as for reads where the cache is not large enough to
+  hold the index blocks.
+* This can impact write-mostly workloads too is indexes need pulled into cache.
 
 ## Impact of Instance Size on write performance
 

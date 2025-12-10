@@ -6,8 +6,8 @@ Ignore content for now.
 
 | Author      | John Page  |
 |-------------|------------|
-| **Date**    | 2020-09-22 |
-| **Version** | 0.1        |
+| **Date**    | 2025-12-09 |
+| **Version** | 0.2        |
 
 ## TLDR;
 
@@ -313,10 +313,10 @@ well-constructed business identifier can al act as a very efficient key.
 ### Description
 
 This test shows how each additional index, on a field containing a random
-integer number impacts insert performance. As seen in the _id test abouve random
+integer number impacts insert performance. As seen in the _id test above random
 indexes are the worst performing compared to sequential or recent-date indexes.
 
-We preload 3 million 4KB documents then measure loading the next 3 million, and
+We preload 3 million 4KB documents, then measure loading the next 3 million, and
 index N simple integer fields in each. The load batch size is 1,000.
 
 ### Base Atlas Instance
@@ -354,13 +354,13 @@ index N simple integer fields in each. The load batch size is 1,000.
 
 ### Analysis
 
-We can see each additional index adds CPU overhead,and both read and write Disk
+We can see each additional index adds CPU overhead, and both read and write Disk
 operations.
 
 Starting from our baseline write speed of 128MB/s we see adding 4 indexes
 reduces write speed by roughly 30% and 8 by 70% whilst 16 indexes result in a
-92% performance reduction. The IOPS required rise although even with 16
-indexes, we are still requiring only 2,200 IOPS - less than the minimum provided
+92% performance reduction. The IOPS required rise, although even with 16
+indexes, we are still requiring only 2,200 IOPS—less than the minimum provided
 on standard disks.
 
 We also see an impact on latency, but we are testing here with batches of 1,000
@@ -385,38 +385,55 @@ have a hard throughput limit as described above in Atlas (AWS), Provisioned
 IOPS scale the throughput with the number of IOPS. This test looks at the
 implications of Standard vs Provisioned IOPS for read and write performance.
 
-In this test We load 30 million 4KB documents with
+In this test we load 30 million 4KB documents with
 4 secondary indexes comparing the implications of Standard(gp3) vs.
 Provisioned (io2)  IOPS and different numbers of provisioned IOPS.
+We use an M50 to ensure sufficient CPU for the random indexes.
 
 ### Base Atlas Instance
 
 | Instance Type | Disk Type | Disk IOPS | Disk Size |
 | --: | --: | --: | --: |
-| M40 | STANDARD | 3000 | 200 |
+| M50 | STANDARD | 3000 | 200 |
   
 
 ### Performance
 
 | Disk Specification | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| PROVISIONED (200GB@1500IOPS) | 3043 | 117188 | 9858 | 39.43 | 2204 |
-| PROVISIONED (200GB@3000IOPS) | 2885 | 117188 | 10400 | 41.6 | 2164 |
-| PROVISIONED (200GB@4500IOPS) | 2845 | 117188 | 10543 | 42.17 | 2209 |
-| PROVISIONED (200GB@6000IOPS) | 3108 | 117188 | 9653 | 38.61 | 2443 |
-| STANDARD (200GB@3000IOPS) | 2950 | 117188 | 10171 | 40.68 | 2256 |
+| PROVISIONED (200GB@1500IOPS) | 1756 | 117188 | 17088 | 68.35 | 1331 |
+| PROVISIONED (200GB@3000IOPS) | 954 | 117188 | 31439 | 125.76 | 655 |
+| PROVISIONED (200GB@4500IOPS) | 761 | 117188 | 39396 | 157.58 | 426 |
+| PROVISIONED (200GB@6000IOPS) | 745 | 117188 | 40281 | 161.12 | 409 |
+| STANDARD (200GB@3000IOPS) | 1328 | 117188 | 22587 | 90.35 | 808 |
   
 
 ### Resource Usage
 
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| PROVISIONED (200GB@1500IOPS) | 92 | 2 | 8799 | 172331 | 23358 | 2020 | 153 | 7 |
-| PROVISIONED (200GB@3000IOPS) | 95 | 0 | 8916 | 174996 | 24641 | 2857 | 172 | 0 |
-| PROVISIONED (200GB@4500IOPS) | 96 | 0 | 9027 | 177579 | 24980 | 2949 | 175 | 0 |
-| PROVISIONED (200GB@6000IOPS) | 96 | 0 | 9088 | 173886 | 22871 | 2935 | 170 | 0 |
-| STANDARD (200GB@3000IOPS) | 95 | 0 | 9069 | 177382 | 24099 | 2286 | 166 | 0 |
+| PROVISIONED (200GB@1500IOPS) | 38 | 21 | 3786 | 160259 | 40487 | 1830 | 164 | 0 |
+| PROVISIONED (200GB@3000IOPS) | 65 | 8 | 8904 | 284848 | 74491 | 3939 | 314 | 7 |
+| PROVISIONED (200GB@4500IOPS) | 80 | 2 | 10286 | 337191 | 93343 | 5204 | 389 | 1 |
+| PROVISIONED (200GB@6000IOPS) | 82 | 1 | 10054 | 339270 | 95441 | 5713 | 402 | 1 |
+| STANDARD (200GB@3000IOPS) | 46 | 17 | 5996 | 205160 | 53517 | 2784 | 216 | 0 |
   
+
+### Analysis
+
+We have created a scenario here where every write has an impact on four random
+indexes, the indexes are larger that fit in RAM and so we are seeing a very
+significant amount of read-into-cache. Effectively we need the IOPS to support
+reading rather than writing as we have to read index blocks to modify them.
+
+This then allows us to write more so we see higher write IO but this is due to
+having more available for the required reads first.
+
+### Key Takeaways
+
+* IOPS should be though of as for reads where the cache is not large enough to
+  hold the index blocks.
+* This can impact write-mostly workloads too is indexes need pulled into cache.
 
 ## Impact of Instance Size on write performance
 
@@ -436,15 +453,10 @@ In these tests we are using 2000 provisioned IOPS.
 
 | Instance Type | Time Taken (s) | Data Loaded (MB) | Speed (docs/s) | Speed (MB/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
-| M30 | 5088 | 46875 | 2358 | 9.43 | 10806 |
 | M30 | 4888 | 46875 | 2455 | 9.82 | 10113 |
-| M40 | 703 | 46875 | 17072 | 68.29 | 1292 |
 | M40 | 698 | 46875 | 17181 | 68.72 | 1325 |
-| M50 | 432 | 46875 | 27772 | 111.09 | 778 |
 | M50 | 326 | 46875 | 36831 | 147.33 | 469 |
-| M60 | 362 | 46875 | 33182 | 132.73 | 622 |
 | M60 | 282 | 46875 | 42516 | 170.07 | 348 |
-| M80 | 239 | 46875 | 50275 | 201.1 | 297 |
 | M80 | 199 | 46875 | 60153 | 240.61 | 218 |
   
 
@@ -452,15 +464,10 @@ In these tests we are using 2000 provisioned IOPS.
 
 | Disk Specification | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) | O/S Read (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| M30 | 92 | 0 | 5133 | 87797 | 5588 | 409 | 47 | 0 |
 | M30 | 96 | 0 | 5470 | 90152 | 5817 | 453 | 50 | 0 |
-| M40 | 87 | 0 | 7815 | 193188 | 40449 | 2436 | 197 | 1 |
 | M40 | 88 | 0 | 8388 | 200017 | 40709 | 2674 | 201 | 0 |
-| M50 | 40 | 17 | 6144 | 218253 | 65804 | 2881 | 249 | 0 |
 | M50 | 52 | 10 | 8012 | 295582 | 87268 | 4582 | 323 | 9 |
-| M60 | 23 | 11 | 4840 | 288562 | 78621 | 3157 | 284 | 0 |
 | M60 | 29 | 7 | 7568 | 388929 | 100738 | 2794 | 373 | 4 |
-| M80 | 13 | 7 | 4125 | 349582 | 119119 | 2554 | 350 | 0 |
 | M80 | 7 | 10 | 4526 | 379435 | 142527 | 3736 | 354 | 0 |
   
 
