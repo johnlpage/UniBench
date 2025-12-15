@@ -441,13 +441,22 @@ having more available for the required reads first.
 
 This test compares the performance increasing Atlas instance sizes on
 performance
+
 in an insert-with-secondary-indexes workload. The test inserts 3M x 4KB
-documents with 4 secondary indexes, then measures the time to add 3M documents.
-As the instance size increases, both the CPU and RAM increase as we are not
+documents with 4 secondary indexes, then measures the time to add 12M additional
+documents. As the instance size increases, both the CPU and RAM increase as we
+are not
 using any low-cpu instances at this time. From M30 to M40 the cache increases
 from 2GB to 8GB as the RAM goes from 8GB to 16GB.
 
-In these tests we are using 2000 provisioned IOPS.
+In these tests we are using 3000 provisioned IOPS.
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M30 | PROVISIONED | 3000 | 512 |
+  
 
 ### Performance
 
@@ -471,6 +480,41 @@ In these tests we are using 2000 provisioned IOPS.
 | M80 | 7 | 10 | 4526 | 379435 | 142527 | 3736 | 354 | 0 |
   
 
+### Analysis
+
+We see the performance of the M30 instance is very low, relatively—this is also
+CPU bound at an average of 96% CPU. CPU is being used to compress both
+replication streams and the writes to disk, so there is a notable overhead in
+any MongoDB system for these system tasks. This is one reason that these tests
+are all on an M40 or higher where a couple of cores can be left to handle I/O
+and replication.
+
+When we get to an M40 we see no I/O Wait and 88% CPU usage suggesting that the
+limiting factor for this instance type is the CPU.
+
+Larger than an M50 we see interesting behaviour as the data written per second
+rises, although in no way proportional to the doubling instance sizes
+M50->M60->M80 double in RAM and CPU each time we double the instance size we get
+a 20-30% increase in throughput.
+
+The I/O Wait observed on M50 upwards points to what out limiting factor here -
+on an M50 we have significant read into cache - and we are hitting the ~370MB/s
+we get on an Privisioned IOPS drive with 3,000 IOPS.
+
+This also lets us establish that in general we get 125MB/s of write per 1000
+IOPS on provisioned drives
+
+### Key Takeaways
+
+* There is a balance between CPU and Disk in terms fo what limits write
+  thoughtput
+* Instances over M40 can saturate 3,000 IOPS on when writing to provisioned
+  drives.
+* Ever-increasing instance sizes is unhelpful if the issue is IO related
+* Replication can saturate one core per replica and bounds replicaiton at
+  3-400MB/s.
+*
+
 ## Impact of hot documents and concurrency on write performance
 
 ### Description
@@ -485,6 +529,13 @@ with 1 Million 1KB documents. We are only modifying a small number of them
 anyway.
 We first insert 1 million 1KB documents, then update one of them with a varying
 number of threads, per perform
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M30 | STANDARD | 3000 | 60 |
+  
 
 ### Performance
 
@@ -522,19 +573,26 @@ number of threads, per perform
 | 400 | true | 86 | 0 | 23 | 936 | 0.06 | 82 | 2 |
   
 
-## Comparison of using UpdateOne vs. FindOneAnd Update and upsert vs. insert
+## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 
 ### Description
 
 We add 500,000 1KB documents to a collection. Then we perform either a series of
-updates or a mix of updates and
-inserts where inserts are handled either by upsert or by a second call to insert
-when not found for update.
+updates or a mix of updates and inserts where inserts are handled either by
+upsert or by a second call to insert when not found for update.
 
 We also try using both UpdateOne() and FindOneAndUpdate() to compare
 performance. In both cases 500,000 write ops are performed using 30 threads.
 
 ### Performance
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M30 | STANDARD | 3000 | 60 |
+  
+
 
 | Percent Inserts | Function | Using Upsert | Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: | --: |
@@ -547,6 +605,26 @@ performance. In both cases 500,000 write ops are performed using 30 threads.
 | 50 | FindOneAndUpdate | false | 214 | 2333 | 6.73 |
 | 50 | FindOneAndUpdate | true | 173 | 2883 | 8.33 |
   
+
+### Analysis
+
+In this set of results, we see that FindOneAndUpdate (And its Replace
+equivalent) slower than updateOne, this we should expect given it does more, but
+many developers fail to appreciate the important difference and use
+FindOneAndUpdate rather than UpdateOne because of the somewhat similar naming.
+
+We also learn that adding upsert to any update command makes it slower even
+where no inserts are taking place. This is because there is optimisation for the
+update-only code path in MDB 8.0 that does not happen currently when upsert is
+in the flags.
+
+### Key Takeaways
+
+* If you do not need the document being modified returned, use updateOne not
+  findOneAndUpadte
+* In most cases avoid upsert and manually handle the insert case—you need to
+  handle cases where two threads fallback to insert and one much retry update
+  anyway.
 
 ## High level comparison of querying types
 
@@ -569,6 +647,13 @@ group_seq_i is the same as group_seq but indexed.
 
 We only retrieve the _id for each document to avoid measuring network cost or
 being limited by it.
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M30 | STANDARD | 3000 | 60 |
+  
 
 ### Performance
 
