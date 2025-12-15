@@ -16,7 +16,7 @@
         "group": "RANDINT(1,100)"
       },
       "limit": 1
-    }
+    },
     {
       "comment": "10 documents, 1 term,  cached, indexed.",
       "query": {

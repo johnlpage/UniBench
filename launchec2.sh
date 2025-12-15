@@ -2,6 +2,7 @@
 
 REGION=eu-west-1
 KEYNAME=johnpage_sa
+export ATLAS_PROJECT_ID=6874b550785ce91564b1fd90
 
 # Get latest Amazon Linux 2023 AMI
 AMI_ID=$(aws ec2 describe-images \
@@ -60,8 +61,9 @@ echo "✓ Instance launched successfully!"
 echo "Instance ID: $INSTANCE_ID"
 echo "Public IP: $PUBLIC_IP"
 echo "Adding Access to MongoDB Cloud Project"
-atlas accessLists create $PUBLIC_IP   --deleteAfter $(date -u -v+24H '+%Y-%m-%dT%H:%M:%SZ') --projectId $ATLAS_PROJECT_ID
 
+atlas accessLists create $PUBLIC_IP   --deleteAfter $(date -u -v+24H '+%Y-%m-%dT%H:%M:%SZ') --projectId $ATLAS_PROJECT_ID
+echo "WARNING: you need to add $PUBLIC_IP to the list of IP's that can use your Atlas API key"
 
 echo ""
 echo "Connect with: ssh -i ~/.ssh/$KEYNAME.pem ec2-user@$PUBLIC_IP"

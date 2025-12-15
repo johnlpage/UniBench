@@ -1,13 +1,9 @@
-# 🚧🚧 UNDER CONSTRUCTION 🚧🚧
-
-Ignore content for now.
-
 # MongoDB Performance Tables
 
-| Author      | John Page  |
-|-------------|------------|
-| **Date**    | 2025-12-09 |
-| **Version** | 0.2        |
+| Author      | John Page   |
+|-------------|-------------|
+| **Date**    | 2025-12-09  |
+| **Version** | 0.9  (Beta) |
 
 ## TLDR;
 
@@ -16,6 +12,27 @@ hardware infrastructure. You can use it to compare the performance of your own
 client code and to determine the hardware required or a given performance
 target. It highlights the impact of various parameters on the performance of
 MongoDB.
+
+## Table of Contents
+
+<!-- TOC -->
+
+* [Introduction](#introduction)
+* [Data Ingestion](#data-ingestion)
+    * [Expected insert speed by document size](#expected-insert-speed-by-document-size)
+    * [Impact of client write batch size on write speed](#impact-of-client-write-batch-size-on-write-speed)
+    * [Impact of primary key type on write speed](#impact-of-primary-key-type-on-write-speed)
+    * [Impact of number of indexes on write speed](#impact-of-number-of-indexes-on-write-speed)
+    * [Standard vs Provisioned IOPS and Throughput](#standard-vs-provisioned-iops-and-throughput)
+    * [Impact of Instance Size on write performance](#impact-of-instance-size-on-write-performance)
+    * [Impact of hot documents and concurrency on write performance](#impact-of-hot-documents-and-concurrency-on-write-performance)
+    * [Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert](#comparison-of-using-updateone-vs-findoneandupdate-and-upsert-vs-explicit-insert)
+    * [High-level comparison of querying types](#high-level-comparison-of-querying-types)
+    * [Comparing the number of documents retrieved after index lookup](#comparing-the-number-of-documents-retrieved-after-index-lookup)
+    * [Impact of IOPS on out-of-cache query performance](#impact-of-iops-on-out-of-cache-query-performance)
+    * [To Add](#to-add)
+
+<!-- TOC -->
 
 ## Introduction
 
@@ -371,9 +388,8 @@ latency with even 16 inexes when writing individual documents.
 
 * You still need indexes to support all read operations so that determines how
   many you need
-* You then need to size for that - having enough RAM for the index working set
-  is crucial
-*
+* You then need to size for those indexes - having enough RAM for the index
+  working set is crucial
 
 ## Standard vs Provisioned IOPS and Throughput
 
@@ -506,14 +522,13 @@ IOPS on provisioned drives
 
 ### Key Takeaways
 
-* There is a balance between CPU and Disk in terms fo what limits write
-  thoughtput
+* There is a balance between CPU and Disk in terms of what limits write
+  throughput.
 * Instances over M40 can saturate 3,000 IOPS on when writing to provisioned
   drives.
-* Ever-increasing instance sizes is unhelpful if the issue is IO related
-* Replication can saturate one core per replica and bounds replicaiton at
-  3-400MB/s.
-*
+* Ever-increasing instance sizes are unhelpful if the issue is IO related
+* Replication can saturate one core per replica and bounds replication at
+  3-400 MB/s.
 
 ## Impact of hot documents and concurrency on write performance
 
@@ -622,15 +637,19 @@ in the flags.
 
 * If you do not need the document being modified returned, use updateOne not
   findOneAndUpadte
-* In most cases avoid upsert and manually handle the insert case—you need to
+* In cases where the insert branch of upsert is frequent, then upsert can save a
+  network call in many cases making it faster overall
+* In more typical cases avoid upsert and manually handle the insert case—you
+  need to
   handle cases where two threads fallback to insert and one much retry update
   anyway.
 
-## High level comparison of querying types
+## High-level comparison of querying types
 
 ### Description
 
-This looks at a high level at various forms of simple indexed querying including
+This looks at a high level at various forms of simple indexed querying,
+including
 those with an imperfect index. The test inserts 5,000,000 4KB Documents, These
 are divided into 12,500 groups with the field 'group' having an integer group
 id. There are 400 documents in each group. The documents in a group are not
@@ -693,18 +712,27 @@ being limited by it.
 | 100 Documents, 100 Terms, indexed, cached | 78 | 0 | 1 | 5 |
   
 
-## Comparing the number of documents retrieved after and index lookup
+## Comparing the number of documents retrieved after index lookup
 
 ### Description
 
 This test fetches N documents identified by a single indexed key comparing both
-cached and uncached options. Although it projects and returns only the _id
-field to the client for each to avoid measuring network, it needs to FETCH the
-entire document into cache to do so as _id is not in the index used.
+cached and uncached options. It projects and returns only the _id field to the
+client for each to avoid measuring network constraints. To fetch _ id it needs
+to FETCH the entire document into cache  _id is not in the index used for
+retrieval and cannot be covered.
 
-This shows how the performance is impaced by the number of documents. Fetching >
-101 documents further requires a second call _getmore_ by the client to fetch
-the next batch of documents.
+This test shows how the performance is impacted by the number of documents
+retrieved. Fetching more than 101 documents further requires a second network
+call ( _getMore_) by the client to fetch the next batch of documents. This can
+be modified with batchsize if the specific number is known.
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M30 | STANDARD | 3000 | 60 |
+  
 
 ### Performance
 
@@ -757,15 +785,22 @@ being in the same call tp getmore.
 Outside of cache then the cost of each FETCH is much more significant, although
 this is likely dependent on the Disk IOPS available.
 
-## # Impact of IOPS on out-of-cache query performance
+## Impact of IOPS on out-of-cache query performance
 
 ### Description
 
 Sometimes the data volume of the working set is unavoidably large, and the
-working set cannot be held in cache. This examines the impact of the selected IO
-subsystem on the performance of the workload. A before we are using an M40
-instance in increasing the data volumnes for this test as an M30 does not allow
-the full range of IO Options.
+working set cannot be held in the Wired Tiger cache. This examines the impact of
+the selected IO subsystem on the performance of the workload. A before we are
+using an M40 instance in increasing the data volumnes for this test as an M30
+does not allow the full range of I/O Options.
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M40 | STANDARD | 3072 | 1024 |
+  
 
 ### Performance
 
@@ -807,7 +842,7 @@ the full range of IO Options.
     * ~~Retrieval part index~~
     * ~~Retrieval $in~~
     * ~~Retrieval out of cache~~
-* Replacing Data~~
+* Modifying Data
     * Replace
     * Replace and cache
     * Updates
