@@ -627,7 +627,7 @@ latency with even 16 inexes when writing individual documents.
 * You then need to size for those indexes - having enough RAM for the index
   working set is crucial
 
-## Standard vs Provisioned IOPS and Throughput
+## Standard vs. Provisioned IOPS and Throughput
 
 ### Description
 
@@ -740,17 +740,17 @@ We use an M50 to ensure sufficient CPU for the random indexes.
 
 We have created a scenario here where every write has an impact on four random
 indexes, the indexes are larger that fit in RAM and so we are seeing a very
-significant amount of read-into-cache. Effectively we need the IOPS to support
+significant amount of read-into-cache. Effectively, we need the IOPS to support
 reading rather than writing as we have to read index blocks to modify them.
 
-This then allows us to write more so we see higher write IO but this is due to
+This then allows us to write more so we see higher write IO, but this is due to
 having more available for the required reads first.
 
 ### Key Takeaways
 
 * IOPS should be though of as for reads where the cache is not large enough to
-  hold the index blocks.
-* This can impact write-mostly workloads too is indexes need pulled into cache.
+  hold the index blocks. * This can impact write-mostly workloads too is indexes
+  need pulled into the cache.
 
 ## Impact of Instance Size on write performance
 
@@ -889,7 +889,7 @@ IOPS on provisioned drives
   throughput.
 * Instances over M40 can saturate 3,000 IOPS on when writing to provisioned
   drives.
-* Ever-increasing instance sizes are unhelpful if the issue is IO related
+* Ever-increasing instance sizes are unhelpful if the issue is IO-related
 * Replication can saturate one core per replica and bounds replication at
   3-400 MB/s.
 
@@ -897,16 +897,29 @@ IOPS on provisioned drives
 
 ### Description
 
-Where many threads simultaneously modify the same document - the internal
-optimistic-with-retry
-concurrency in MongoDB means that N simultanous updates result in N^2/2 quantity
-of work; this test measures the
-real world impact of this. This is primarily related to RAM and CPU usage so we
-can use a relatively small data set
-with 1 Million 1KB documents. We are only modifying a small number of them
-anyway.
-We first insert 1 million 1KB documents, then update one of them with a varying
-number of threads, per perform
+Where many threads simultaneously modify the same document, the internal
+optimistic-with-retry concurrency inside MongoDB means that N simultaneous
+updates result in an N^2/2 quantity of work. This test measures the real-world
+impact of this retry contention. This is primarily related to RAM and CPU usage,
+so we can use a relatively small data set with 1 Million 1KB documents. Then we
+update one of them with a varying number of threads, incrementing a single value
+so each write does eventually take place.
+
+This test is run with an M30 instance and is inherently CPU-bound. As the number
+of
+available cores grows, the performance will not significantly improve as we are
+essentially measuring a single threaded operation (one update to one document)
+and the cost of excessive retries. Additional CPU can handle more wasted write
+conflicts but not really improve throughput.
+
+There is a variant to this anti-patttern not shown here where each thread
+ultimately updates a different document. In this case the problem is compounded
+by the document not matching the query after a failure and requiring a new
+query. this has significantly more performance overhead. An example might be
+dequeueing tasks using findOneAndUpadte.
+
+We are also looking here at the impact of the update also updating an index
+resulting in two wiredtiger tables being modified rather than just one.
 
 ### Base Atlas Instance
 
@@ -997,6 +1010,36 @@ number of threads, per perform
 }
 -->  
 
+### Analysis
+
+In this scenario, each request from the client is updating a single doucment -
+in this case having just a single thread would have minimal contention and
+retries, but time would be wasted in network round trip time.
+
+Leaving aside very unusual scenarios where multiple updates to one documetn were
+sent from the client as part of a single call we are therefore looking for a
+balance of threads to retries to determine the maximum performance.
+
+Graphing these figures shows a peak around 70 threads so that shoudl be
+considered optimal, although it is, of course, dependent on network latency.
+Adding the index update and making each operation take slightly longer seems to
+push the acceptable thread count up.
+
+The writeConflicts column shows the number of retries representing CPU work
+wasted.
+
+Notably as well - the IOPS here is high relative to the volume written, on this
+case. We are performing many individual writes of tiny documents, each of which
+is forcing frequent disk flushes of the WAL but not enough to maximize the
+volume of data written per flush.
+
+### Key Takeaways
+
+* It is OK to have a single document being updated by multiple threads as long
+  as this is outside a transaction, however, the maximum throughput it then
+  limited to ~4,000 updates/s with more threads slowing this down.
+* In general avoid having hot documents unless they are really not very hot.
+
 ## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 
 ### Description
@@ -1079,18 +1122,20 @@ in the flags.
 
 ## High-level comparison of querying types
 
+___THIS PART IS STILL UNDER CONSTRUCTION AND BEING VALIDATED___
+__TO BE REDONE AS LARGER INSTANCE MEANT TOO MUCH CACHING, INCREAS DATA SIZE__
+
 ### Description
 
 This looks at a high level at various forms of simple indexed querying,
-including
-those with an imperfect index. The test inserts 5,000,000 4KB Documents, These
-are divided into 12,500 groups with the field 'group' having an integer group
-id. There are 400 documents in each group. The documents in a group are not
-contiguous in the database, as we would not expect them to be in an unclustered
-collection.
+including those with an imperfect index. The test inserts 5,000,000 4KB
+Documents. These are divided into 12,500 groups with the field 'group' having an
+integer group id. There are 400 documents in each group. The documents in a
+group are not inserted contiguously in the database, as we would not expect
+them to be in a real-world collection.
 
 Tests run on the whole data set and on a subset to show cached and uncached
-results. Tests may fetch a single document, a set from the saem group or a
+results. Tests may fetch a single document, a set from the same group or a
 single document from many different groups.
 
 Within the group the field group_seq has a value 0–400 allowing us to fetch a
@@ -1184,6 +1229,44 @@ being limited by it.
     "headers": ["Query Type",  "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS"]
 }
 -->  
+
+### Analysis
+
+Our headline figure suggest that an M10 instance, when the required data is
+indexed and in cache can acieve 22,500 queries per second. Not shown here a
+previous test with an M30 showed this at ~11,000 so we can work on the basis
+that the best performance on simple queries is 5,500 queries per second per
+core.
+
+Data not being in the cache drops this to 33%, this being on a fast SSD-based
+network disk and being constrained by the 3,000 IOPS available. The drop for
+out-of-cache to IOPS is less than might be expected.
+
+When we move to a single index lookup but retrieving many documents from the
+same simple query, we see our QPS drop to 3,800. In this case each query is
+fetching 100 documents, so the overall docs/s is higher, this is partly down to
+network round trip overheads making fetching one document queries inefficient.
+
+We can see that when performing paging, a range-based page can be 50% faster
+than a skip-based page once the number of pages skipped is around 20.
+
+WHen cached, retriving 100 documents from a single query term is about 20%
+faster than retriving 100 documents with a 100 term $in clause. But this
+includes the fetch cost of the 100 documents too. The tests suggest 66% of the
+time is spent in the FETCH, if we subract that, we can see that 100 index
+lookups is almost the same speed as one index lookup.
+
+### Key Takeaways
+
+* When considering query speed, don't think of queries per second alone, think
+  of documents returned per second.
+* When reading out of cache throughput is limited by IOPS as random reads
+  required
+* Imperfectly indexed queries requiring a FILTER the doucment have a large
+  overhead.
+* Imperfectly indexed documents requiring an out-of-cache FETCH then a FILTER
+  have huge overhead.
+* Many (100) terms in a $in clause are almost as fast as a single term.
 
 ## Comparing the number of documents retrieved after index lookup
 
@@ -1287,24 +1370,12 @@ be modified with batchsize if the specific number is known.
 
 ### Analysis
 
-We can see that the impact of fetching up to 100 documents where the data is in
-cache is minimal, the FETCH operation is relatively inexpensive. Beyond 100,
-then the second network call seems to have an outsize impact on performance with
-speed dropping by 40% at 200 and again by 40% when we go to 400 despite these
-being in the same call tp getmore.
-
-Outside of cache then the cost of each FETCH is much more significant, although
-this is likely dependent on the Disk IOPS available.
-
 ## Impact of IOPS on out-of-cache query performance
 
 ### Description
 
-Sometimes the data volume of the working set is unavoidably large, and the
-working set cannot be held in the Wired Tiger cache. This examines the impact of
-the selected IO subsystem on the performance of the workload. A before we are
-using an M40 instance in increasing the data volumnes for this test as an M30
-does not allow the full range of I/O Options.
+THis test measures impact available IOPS have on read performance.
+To be REDON as bounded by CPU in this test
 
 ### Base Atlas Instance
 
@@ -1390,6 +1461,14 @@ does not allow the full range of I/O Options.
     "headers": ["Disk Type", "Disk IOPS", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS"]
 }
 -->  
+
+### Analysis
+
+Retrival speed is not proportional ti IOPS provisioned
+Above 3,000 IOPS CPU is significant (decompressoin)
+REDO Test with more CPU!
+
+### Key Takeaways
 
 ## To Add
 

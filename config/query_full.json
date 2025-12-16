@@ -3,7 +3,7 @@
   "numberOfThreads": 48,
   "database": "unibench",
   "collection": "query",
-  "initialDocsToInsert": 5000000,
+  "initialDocsToInsert": 15000000,
   "groupSize": 400,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,

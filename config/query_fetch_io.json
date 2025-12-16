@@ -3,7 +3,7 @@
   "numberOfThreads": 48,
   "database": "unibench",
   "collection": "query",
-  "initialDocsToInsert": 10000000,
+  "initialDocsToInsert": 25000000,
   "groupSize": 400,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,
@@ -16,7 +16,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M60",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3072,
         "atlasDiskSizeGB": 1024,
@@ -31,7 +31,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 1000,
         "atlasDiskSizeGB": 1024,
@@ -46,7 +46,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 1024,
@@ -61,7 +61,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 1024,
@@ -76,7 +76,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 4500,
         "atlasDiskSizeGB": 1024,
@@ -91,7 +91,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M40",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 6000,
         "atlasDiskSizeGB": 1024,
