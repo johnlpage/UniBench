@@ -16,7 +16,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M60",
+        "atlasInstanceType": "M50",
         "atlasDiskType": "STANDARD",
         "atlasIOPS": 3072,
         "atlasDiskSizeGB": 1024,
@@ -46,7 +46,7 @@
         "group": "RANDINT(1,25000)"
       },
       "instance": {
-        "atlasInstanceType": "M50",
+        "atlasInstanceType": "M60",
         "atlasDiskType": "PROVISIONED",
         "atlasIOPS": 3000,
         "atlasDiskSizeGB": 1024,
