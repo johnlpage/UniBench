@@ -13,7 +13,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M50",
@@ -28,7 +28,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M50",
@@ -43,7 +43,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M60",
@@ -58,7 +58,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M50",
@@ -73,7 +73,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M50",
@@ -88,7 +88,7 @@
     {
       "comment": "100 documents, 1 term,   not cached, indexed.",
       "query": {
-        "group": "RANDINT(1,25000)"
+        "group": "RANDINT(1,62500)"
       },
       "instance": {
         "atlasInstanceType": "M50",
