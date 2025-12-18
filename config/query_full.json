@@ -6,7 +6,7 @@
   "initialDocsToInsert": 60000000,
   "groupSize": 400,
   "writeBatchSize": 1000,
-  "docSizeKB": 1.0,
+  "docSizeKB": 2.0,
   "testTimeSecs": 300,
   "warmup": true,
   "variants": [
