@@ -3,67 +3,74 @@
   "numberOfThreads": 48,
   "database": "unibench",
   "collection": "query",
-  "initialDocsToInsert": 15000000,
+  "initialDocsToInsert": 60000000,
   "groupSize": 400,
   "writeBatchSize": 1000,
-  "docSizeKB": 4.0,
+  "docSizeKB": 1.0,
   "testTimeSecs": 300,
   "warmup": true,
   "variants": [
     {
+      "order": 1,
       "comment": "1 document, 1 term,  cached, indexed.",
       "nQueries": 4000000,
       "query": {
-        "_id": "RANDINT(1,=$initialDocsToInsert/500)"
+        "_id": "RANDINT(1,100000)"
       },
       "limit": 1
     },
     {
+      "order": 2,
       "comment": "1 document, not cached, indexed.",
-      "nQueries": 2000000,
+      "nQueries": 4000000,
       "query": {
-        "_id": "RANDINT(1,=$initialDocsToInsert)"
+        "_id": "RANDINT(1,60000000)"
       },
       "limit": 1
     },
     {
+      "order": 3,
       "comment": "100 documents,1 term, cached, indexed ",
-      "nQueries": 2000000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,100)"
+        "group": "RANDINT(1,25)"
       },
       "limit": 100
     },
     {
+      "order": 4,
       "comment": "100 documents, 1 term, not cached, indexed",
-      "nQueries": 5000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)"
+        "group": "RANDINT(1,150000)"
       },
       "limit": 100
     },
     {
+      "order": 5,
       "comment": "20 Documents, 1 term, cached",
-      "nQueries": 500000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,100)"
+        "group": "RANDINT(1,25)"
       },
       "limit": 20
     },
     {
+      "order": 6,
       "comment": "20 Documents, 380 skipped, 1 term, cached",
-      "nQueries": 500000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,100)"
+        "group": "RANDINT(1,25)"
       },
       "limit": 20,
       "skip": 380
     },
     {
+      "order": 7,
       "comment": "20 documents, 380 range skipped, 1 term, cached",
-      "nQueries": 100000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,100)",
+        "group": "RANDINT(1,25)",
         "group_seq_i": {
           "$gte": 380
         }
@@ -71,27 +78,30 @@
       "limit": 20
     },
     {
+      "order": 8,
       "comment": "20 documents, 1 term, not cached",
-      "nQueries": 5000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)"
+        "group": "RANDINT(1,150000)"
       },
       "limit": 20
     },
     {
+      "order": 9,
       "comment": "20 documents, 380 skipped, 1 term, not cached",
-      "nQueries": 5000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)"
+        "group": "RANDINT(1,150000)"
       },
       "limit": 20,
       "skip": 380
     },
     {
+      "order": 10,
       "comment": "20 documents, 380 range skipped, 1 term, not cached",
-      "nQueries": 5000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)",
+        "group": "RANDINT(1,150000)",
         "group_seq_i": {
           "$gte": 380
         }
@@ -99,39 +109,43 @@
       "limit": 20
     },
     {
+      "order": 11,
       "comment": "1 Document, 2 terms, partial index, not cached",
-      "nQueries": 1000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)",
+        "group": "RANDINT(1,150000)",
         "group_seq": "RANDINT(1,400)"
       },
       "limit": 1
     },
     {
+      "order": 12,
       "comment": "1 Document, 2 terms, compound index,  cached",
-      "nQueries": 5000,
+      "nQueries": 4000000,
       "query": {
-        "group": "RANDINT(1,=$initialDocsToInsert/400)",
+        "group": "RANDINT(1,25)",
         "group_seq_i": "RANDINT(1,400)"
       },
       "limit": 1
     },
     {
+      "order": 13,
       "comment": "100 Documents, 100 Terms, indexed, cached",
-      "nQueries": 1000,
+      "nQueries": 4000000,
       "query": {
         "_id": {
-          "$in": "RANDINTLIST(1,10000,100)"
+          "$in": "RANDINTLIST(1,100000,100)"
         }
       },
       "limit": 100
     },
     {
+      "order": 14,
       "comment": "100 Documents, 100 Terms, indexed, not cached",
-      "nQueries": 1000,
+      "nQueries": 4000000,
       "query": {
         "_id": {
-          "$in": "RANDINTLIST(1,=$initialDocsToInsert,100)"
+          "$in": "RANDINTLIST(1,60000000,100)"
         }
       },
       "limit": 100

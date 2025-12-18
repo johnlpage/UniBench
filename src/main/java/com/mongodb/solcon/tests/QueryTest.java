@@ -207,7 +207,7 @@ public class QueryTest extends BaseMongoTest {
         int size = 0;
         int reportCount = 0;
         int nGroups = initialDocsToInsert / groupSize;
-        for (int doc = 0; doc < initialDocsToInsert; doc++) {
+        for (long doc = 0; doc < initialDocsToInsert; doc++) {
           // Serial Numbering
           extraFields.put("_id", doc);
           // A Group of related data is not co-located usually

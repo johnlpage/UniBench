@@ -723,40 +723,40 @@ being limited by it.
 
 | Query Type | Time Taken (s) | Speed (Queries/s) |
 | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 301 | 22586 |
-| 1 document, not cached, indexed. | 301 | 8383 |
-| 100 documents,1 term, cached, indexed  | 301 | 3837 |
-| 100 documents, 1 term, not cached, indexed | 301 | 3640 |
-| 20 Documents, 1 term, cached | 301 | 10036 |
-| 20 Documents, 380 skipped, 1 term, cached | 301 | 6274 |
-| 20 documents, 380 range skipped, 1 term, cached | 301 | 9466 |
-| 20 documents, 1 term, not cached | 301 | 9541 |
-| 20 documents, 380 skipped, 1 term, not cached | 301 | 6110 |
-| 20 documents, 380 range skipped, 1 term, not cached | 301 | 9160 |
-| 1 Document, 2 terms, partial index, not cached | 302 | 64 |
-| 1 Document, 2 terms, compound index,  cached | 301 | 9456 |
-| 100 Documents, 100 Terms, indexed, cached | 301 | 3212 |
-| 100 Documents, 100 Terms, indexed, not cached | 301 | 79 |
+| 100 documents,1 term, cached, indexed  | 301 | 3734 |
+| 20 Documents, 1 term, cached | 301 | 9734 |
+| 20 Documents, 380 skipped, 1 term, cached | 301 | 6075 |
+| 20 documents, 380 range skipped, 1 term, cached | 301 | 9269 |
+| 100 Documents, 100 Terms, indexed, cached | 301 | 3099 |
+| 1 document, 1 term,  cached, indexed. | 301 | 21720 |
+| 1 document, not cached, indexed. | 301 | 4001 |
+| 100 documents, 1 term, not cached, indexed | 301 | 141 |
+| 20 documents, 1 term, not cached | 301 | 9114 |
+| 20 documents, 380 skipped, 1 term, not cached | 301 | 5922 |
+| 20 documents, 380 range skipped, 1 term, not cached | 301 | 8857 |
+| 1 Document, 2 terms, partial index, not cached | 302 | 21 |
+| 1 Document, 2 terms, compound index,  cached | 301 | 4002 |
+| 100 Documents, 100 Terms, indexed, not cached | 301 | 39 |
   
 
 ### Resource Usage
 
 | Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 70 | 0 | 1 | 11 |
-| 1 document, not cached, indexed. | 41 | 42 | 5850 | 3309 |
-| 100 documents,1 term, cached, indexed  | 79 | 0 | 1 | 13 |
-| 100 documents, 1 term, not cached, indexed | 79 | 0 | 0 | 11 |
-| 20 Documents, 1 term, cached | 77 | 0 | 1 | 9 |
-| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 0 | 9 |
-| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 0 | 9 |
-| 20 documents, 1 term, not cached | 77 | 0 | 0 | 11 |
-| 20 documents, 380 skipped, 1 term, not cached | 78 | 0 | 0 | 8 |
-| 20 documents, 380 range skipped, 1 term, not cached | 77 | 0 | 0 | 7 |
-| 1 Document, 2 terms, partial index, not cached | 17 | 78 | 7104 | 3404 |
-| 1 Document, 2 terms, compound index,  cached | 61 | 18 | 6610 | 3333 |
-| 100 Documents, 100 Terms, indexed, cached | 73 | 0 | 1 | 11 |
-| 100 Documents, 100 Terms, indexed, not cached | 15 | 77 | 5487 | 3331 |
+| 100 documents,1 term, cached, indexed  | 79 | 0 | 1 | 12 |
+| 20 Documents, 1 term, cached | 77 | 0 | 1 | 13 |
+| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 2 | 11 |
+| 20 documents, 380 range skipped, 1 term, cached | 72 | 0 | 1 | 11 |
+| 100 Documents, 100 Terms, indexed, cached | 73 | 0 | 1 | 12 |
+| 1 document, 1 term,  cached, indexed. | 75 | 0 | 1 | 9 |
+| 1 document, not cached, indexed. | 25 | 64 | 3748 | 3217 |
+| 100 documents, 1 term, not cached, indexed | 20 | 73 | 8407 | 3357 |
+| 20 documents, 1 term, not cached | 73 | 0 | 2 | 14 |
+| 20 documents, 380 skipped, 1 term, not cached | 73 | 0 | 3 | 11 |
+| 20 documents, 380 range skipped, 1 term, not cached | 73 | 0 | 2 | 11 |
+| 1 Document, 2 terms, partial index, not cached | 10 | 84 | 3747 | 3216 |
+| 1 Document, 2 terms, compound index,  cached | 32 | 54 | 3650 | 3217 |
+| 100 Documents, 100 Terms, indexed, not cached | 12 | 82 | 3680 | 3232 |
   
 
 ### Analysis
@@ -823,19 +823,19 @@ be modified with batchsize if the specific number is known.
 
 | Query Type | Time Taken (s) | Speed (Queries/s) |
 | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 301 | 15987 |
-| 10 documents, 1 term,  cached, indexed. | 301 | 12339 |
-| 20 documents, 1 term,  cached, indexed. | 301 | 9876 |
-| 50 documents, 1 term,  cached, indexed. | 301 | 6305 |
-| 100 documents, 1 term,  cached, indexed. | 301 | 3859 |
-| 200 documents, 1 term,  cached, indexed. | 301 | 1971 |
-| 400 documents, 1 term,  cached, indexed. | 301 | 1106 |
-| 1 document, 1 term,  not cached, indexed. | 301 | 15750 |
-| 10 documents, 1 term,   not cached,, indexed. | 301 | 11677 |
-| 20 documents, 1 term,   not cached,, indexed. | 301 | 9475 |
-| 50 documents, 1 term,   not cached,, indexed. | 301 | 5937 |
-| 100 documents, 1 term,   not cached,, indexed. | 301 | 3619 |
-| 200 documents, 1 term,   not cached,, indexed. | 301 | 664 |
+| 1 document, 1 term,  cached, indexed. | 301 | 15363 |
+| 10 documents, 1 term,  cached, indexed. | 301 | 12071 |
+| 20 documents, 1 term,  cached, indexed. | 301 | 9780 |
+| 50 documents, 1 term,  cached, indexed. | 301 | 6177 |
+| 100 documents, 1 term,  cached, indexed. | 301 | 3879 |
+| 200 documents, 1 term,  cached, indexed. | 301 | 1991 |
+| 400 documents, 1 term,  cached, indexed. | 301 | 1092 |
+| 1 document, 1 term,  not cached, indexed. | 301 | 15629 |
+| 10 documents, 1 term,   not cached,, indexed. | 301 | 11811 |
+| 20 documents, 1 term,   not cached,, indexed. | 301 | 9460 |
+| 50 documents, 1 term,   not cached,, indexed. | 301 | 5861 |
+| 100 documents, 1 term,   not cached,, indexed. | 301 | 3612 |
+| 200 documents, 1 term,   not cached,, indexed. | 301 | 642 |
 | 400 documents, 1 term,   not cached,, indexed. | 302 | 21 |
   
 
@@ -843,20 +843,20 @@ be modified with batchsize if the specific number is known.
 
 | Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 71 | 0 | 1 | 9 |
-| 10 documents, 1 term,  cached, indexed. | 72 | 0 | 1 | 8 |
-| 20 documents, 1 term,  cached, indexed. | 72 | 0 | 1 | 7 |
-| 50 documents, 1 term,  cached, indexed. | 73 | 0 | 1 | 11 |
-| 100 documents, 1 term,  cached, indexed. | 74 | 0 | 1 | 12 |
-| 200 documents, 1 term,  cached, indexed. | 74 | 0 | 1 | 6 |
-| 400 documents, 1 term,  cached, indexed. | 74 | 0 | 1 | 5 |
-| 1 document, 1 term,  not cached, indexed. | 71 | 0 | 0 | 8 |
-| 10 documents, 1 term,   not cached,, indexed. | 77 | 0 | 0 | 7 |
-| 20 documents, 1 term,   not cached,, indexed. | 77 | 0 | 0 | 10 |
-| 50 documents, 1 term,   not cached,, indexed. | 78 | 0 | 0 | 10 |
-| 100 documents, 1 term,   not cached,, indexed. | 79 | 0 | 0 | 8 |
-| 200 documents, 1 term,   not cached,, indexed. | 79 | 0 | 47729 | 19 |
-| 400 documents, 1 term,   not cached,, indexed. | 16 | 80 | 5759 | 3325 |
+| 1 document, 1 term,  cached, indexed. | 76 | 0 | 1 | 11 |
+| 10 documents, 1 term,  cached, indexed. | 77 | 0 | 1 | 10 |
+| 20 documents, 1 term,  cached, indexed. | 77 | 0 | 1 | 12 |
+| 50 documents, 1 term,  cached, indexed. | 78 | 0 | 1 | 10 |
+| 100 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 9 |
+| 200 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 9 |
+| 400 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 10 |
+| 1 document, 1 term,  not cached, indexed. | 76 | 0 | 1 | 9 |
+| 10 documents, 1 term,   not cached,, indexed. | 72 | 0 | 1 | 11 |
+| 20 documents, 1 term,   not cached,, indexed. | 72 | 0 | 1 | 9 |
+| 50 documents, 1 term,   not cached,, indexed. | 73 | 0 | 2 | 11 |
+| 100 documents, 1 term,   not cached,, indexed. | 74 | 0 | 3 | 14 |
+| 200 documents, 1 term,   not cached,, indexed. | 74 | 0 | 46698 | 281 |
+| 400 documents, 1 term,   not cached,, indexed. | 14 | 79 | 5663 | 3393 |
   
 
 ### Analysis
@@ -872,29 +872,31 @@ To be REDON as bounded by CPU in this test
 
 | Instance Type | Disk Type | Disk IOPS | Disk Size |
 | --: | --: | --: | --: |
-| M40 | STANDARD | 3000 | 200 |
+| M50 | STANDARD | 3072 | 1024 |
   
 
 ### Performance
 
 | Disk Type | Disk  IOPS | Time Taken (s) | Speed (Queries/s) | $ per hour |
 | --: | --: | --: | --: | --: |
-| PROVISIONED | 1000 | 301 | 311 | 2.33 |
-| PROVISIONED | 3000 | 301 | 1067 | 3.13 |
-| PROVISIONED | 4500 | 301 | 1170 | 3.73 |
-| PROVISIONED | 6000 | 301 | 1224 | 4.33 |
-| STANDARD | 3072 | 301 | 1041 | 1.77 |
+| PROVISIONED | 1000 | 302 | 18 | 2.33 |
+| PROVISIONED | 3000 | 301 | 5133 | 3.13 |
+| PROVISIONED | 3000 | 301 | 155 | 3.13 |
+| PROVISIONED | 4500 | 301 | 316 | 3.73 |
+| PROVISIONED | 6000 | 301 | 570 | 4.33 |
+| STANDARD | 3072 | 301 | 180 | 1.77 |
   
 
 ### Resource Usage
 
 | Disk Type | Disk IOPS | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: | --: |
-| PROVISIONED | 1000 | 14 | 77 | 11954 | 1133 |
-| PROVISIONED | 3000 | 73 | 1 | 39637 | 634 |
-| PROVISIONED | 4500 | 73 | 8 | 43881 | 1044 |
-| PROVISIONED | 6000 | 79 | 0 | 45118 | 832 |
-| STANDARD | 3072 | 68 | 14 | 38320 | 1055 |
+| PROVISIONED | 1000 | 4 | 85 | 1267 | 1085 |
+| PROVISIONED | 3000 | 40 | 42 | 33623 | 1909 |
+| PROVISIONED | 3000 | 11 | 81 | 9558 | 3421 |
+| PROVISIONED | 4500 | 19 | 71 | 15953 | 5161 |
+| PROVISIONED | 6000 | 31 | 54 | 26306 | 6942 |
+| STANDARD | 3072 | 14 | 78 | 10774 | 3543 |
   
 
 ### Analysis
