@@ -817,40 +817,40 @@ be modified with batchsize if the specific number is known.
 
 | Query Type | Time Taken (s) | Speed (Queries/s) |
 | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 301 | 15363 |
-| 10 documents, 1 term,  cached, indexed. | 301 | 12071 |
-| 20 documents, 1 term,  cached, indexed. | 301 | 9780 |
-| 50 documents, 1 term,  cached, indexed. | 301 | 6177 |
-| 100 documents, 1 term,  cached, indexed. | 301 | 3879 |
-| 200 documents, 1 term,  cached, indexed. | 301 | 1991 |
-| 400 documents, 1 term,  cached, indexed. | 301 | 1092 |
-| 1 document, 1 term,  not cached, indexed. | 301 | 15629 |
-| 10 documents, 1 term,   not cached,, indexed. | 301 | 11811 |
-| 20 documents, 1 term,   not cached,, indexed. | 301 | 9460 |
-| 50 documents, 1 term,   not cached,, indexed. | 301 | 5861 |
-| 100 documents, 1 term,   not cached,, indexed. | 301 | 3612 |
-| 200 documents, 1 term,   not cached,, indexed. | 301 | 642 |
-| 400 documents, 1 term,   not cached,, indexed. | 302 | 21 |
+| 1 document, 1 term,  cached, indexed. | 301 | 16750 |
+| 10 documents, 1 term,  cached, indexed. | 301 | 14176 |
+| 20 documents, 1 term,  cached, indexed. | 301 | 12266 |
+| 50 documents, 1 term,  cached, indexed. | 301 | 8469 |
+| 100 documents, 1 term,  cached, indexed. | 301 | 5603 |
+| 200 documents, 1 term,  cached, indexed. | 301 | 2933 |
+| 400 documents, 1 term,  cached, indexed. | 301 | 1649 |
+| 1 document, 1 term,  not cached, indexed. | 301 | 16793 |
+| 10 documents, 1 term,   not cached,, indexed. | 301 | 13408 |
+| 20 documents, 1 term,   not cached,, indexed. | 301 | 10990 |
+| 50 documents, 1 term,   not cached,, indexed. | 301 | 3029 |
+| 100 documents, 1 term,   not cached,, indexed. | 301 | 154 |
+| 200 documents, 1 term,   not cached,, indexed. | 302 | 28 |
+| 400 documents, 1 term,   not cached,, indexed. | 303 | 11 |
   
 
 ### Resource Usage
 
 | Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 76 | 0 | 1 | 11 |
-| 10 documents, 1 term,  cached, indexed. | 77 | 0 | 1 | 10 |
-| 20 documents, 1 term,  cached, indexed. | 77 | 0 | 1 | 12 |
-| 50 documents, 1 term,  cached, indexed. | 78 | 0 | 1 | 10 |
-| 100 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 9 |
-| 200 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 9 |
-| 400 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 10 |
-| 1 document, 1 term,  not cached, indexed. | 76 | 0 | 1 | 9 |
+| 1 document, 1 term,  cached, indexed. | 76 | 0 | 1 | 12 |
+| 10 documents, 1 term,  cached, indexed. | 76 | 0 | 1 | 12 |
+| 20 documents, 1 term,  cached, indexed. | 77 | 0 | 1 | 10 |
+| 50 documents, 1 term,  cached, indexed. | 78 | 0 | 1 | 9 |
+| 100 documents, 1 term,  cached, indexed. | 73 | 0 | 1 | 11 |
+| 200 documents, 1 term,  cached, indexed. | 78 | 0 | 1 | 7 |
+| 400 documents, 1 term,  cached, indexed. | 79 | 0 | 1 | 11 |
+| 1 document, 1 term,  not cached, indexed. | 71 | 0 | 0 | 8 |
 | 10 documents, 1 term,   not cached,, indexed. | 72 | 0 | 1 | 11 |
-| 20 documents, 1 term,   not cached,, indexed. | 72 | 0 | 1 | 9 |
-| 50 documents, 1 term,   not cached,, indexed. | 73 | 0 | 2 | 11 |
-| 100 documents, 1 term,   not cached,, indexed. | 74 | 0 | 3 | 14 |
-| 200 documents, 1 term,   not cached,, indexed. | 74 | 0 | 46698 | 281 |
-| 400 documents, 1 term,   not cached,, indexed. | 14 | 79 | 5663 | 3393 |
+| 20 documents, 1 term,   not cached,, indexed. | 72 | 0 | 1 | 8 |
+| 50 documents, 1 term,   not cached,, indexed. | 74 | 0 | 34598 | 14 |
+| 100 documents, 1 term,   not cached,, indexed. | 24 | 66 | 9491 | 3498 |
+| 200 documents, 1 term,   not cached,, indexed. | 14 | 78 | 4574 | 3474 |
+| 400 documents, 1 term,   not cached,, indexed. | 12 | 81 | 3892 | 3405 |
   
 
 ### Analysis
