@@ -723,40 +723,34 @@ being limited by it.
 
 | Query Type | Time Taken (s) | Speed (Queries/s) |
 | --: | --: | --: |
-| 100 documents,1 term, cached, indexed  | 301 | 3734 |
-| 20 Documents, 1 term, cached | 301 | 9734 |
-| 20 Documents, 380 skipped, 1 term, cached | 301 | 6075 |
-| 20 documents, 380 range skipped, 1 term, cached | 301 | 9269 |
-| 100 Documents, 100 Terms, indexed, cached | 301 | 3099 |
-| 1 document, 1 term,  cached, indexed. | 301 | 21720 |
-| 1 document, not cached, indexed. | 301 | 4001 |
-| 100 documents, 1 term, not cached, indexed | 301 | 141 |
-| 20 documents, 1 term, not cached | 301 | 9114 |
-| 20 documents, 380 skipped, 1 term, not cached | 301 | 5922 |
-| 20 documents, 380 range skipped, 1 term, not cached | 301 | 8857 |
-| 1 Document, 2 terms, partial index, not cached | 302 | 21 |
-| 1 Document, 2 terms, compound index,  cached | 301 | 4002 |
-| 100 Documents, 100 Terms, indexed, not cached | 301 | 39 |
+| 1 document, 1 term,  cached, indexed. | 301 | 21884 |
+| 1 document, not cached, indexed. | 301 | 3545 |
+| 100 documents,1 term, cached, indexed  | 301 | 5372 |
+| 100 documents, 1 term, not cached, indexed | 301 | 150 |
+| 20 Documents, 1 term, cached | 301 | 11330 |
+| 20 Documents, 380 skipped, 1 term, cached | 301 | 6764 |
+| 20 documents, 380 range skipped, 1 term, cached | 301 | 10884 |
+| 1 Document, 2 terms, partial index, not cached | 302 | 22 |
+| 1 Document, 2 terms, compound index,  cached | 301 | 14582 |
+| 100 Documents, 100 Terms, indexed, cached | 301 | 3723 |
+| 100 Documents, 100 Terms, indexed, not cached | 301 | 35 |
   
 
 ### Resource Usage
 
 | Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: |
-| 100 documents,1 term, cached, indexed  | 79 | 0 | 1 | 12 |
-| 20 Documents, 1 term, cached | 77 | 0 | 1 | 13 |
-| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 2 | 11 |
-| 20 documents, 380 range skipped, 1 term, cached | 72 | 0 | 1 | 11 |
-| 100 Documents, 100 Terms, indexed, cached | 73 | 0 | 1 | 12 |
-| 1 document, 1 term,  cached, indexed. | 75 | 0 | 1 | 9 |
-| 1 document, not cached, indexed. | 25 | 64 | 3748 | 3217 |
-| 100 documents, 1 term, not cached, indexed | 20 | 73 | 8407 | 3357 |
-| 20 documents, 1 term, not cached | 73 | 0 | 2 | 14 |
-| 20 documents, 380 skipped, 1 term, not cached | 73 | 0 | 3 | 11 |
-| 20 documents, 380 range skipped, 1 term, not cached | 73 | 0 | 2 | 11 |
-| 1 Document, 2 terms, partial index, not cached | 10 | 84 | 3747 | 3216 |
-| 1 Document, 2 terms, compound index,  cached | 32 | 54 | 3650 | 3217 |
-| 100 Documents, 100 Terms, indexed, not cached | 12 | 82 | 3680 | 3232 |
+| 1 document, 1 term,  cached, indexed. | 70 | 0 | 0 | 10 |
+| 1 document, not cached, indexed. | 24 | 64 | 4069 | 3477 |
+| 100 documents,1 term, cached, indexed  | 73 | 0 | 2 | 11 |
+| 100 documents, 1 term, not cached, indexed | 25 | 66 | 9204 | 3486 |
+| 20 Documents, 1 term, cached | 76 | 0 | 1 | 12 |
+| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 1 | 10 |
+| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 1 | 9 |
+| 1 Document, 2 terms, partial index, not cached | 10 | 81 | 3960 | 3420 |
+| 1 Document, 2 terms, compound index,  cached | 76 | 0 | 1 | 11 |
+| 100 Documents, 100 Terms, indexed, cached | 77 | 0 | 1 | 13 |
+| 100 Documents, 100 Terms, indexed, not cached | 15 | 81 | 3891 | 3474 |
   
 
 ### Analysis
@@ -880,7 +874,6 @@ To be REDON as bounded by CPU in this test
 | Disk Type | Disk  IOPS | Time Taken (s) | Speed (Queries/s) | $ per hour |
 | --: | --: | --: | --: | --: |
 | PROVISIONED | 1000 | 302 | 18 | 2.33 |
-| PROVISIONED | 3000 | 301 | 5133 | 3.13 |
 | PROVISIONED | 3000 | 301 | 155 | 3.13 |
 | PROVISIONED | 4500 | 301 | 316 | 3.73 |
 | PROVISIONED | 6000 | 301 | 570 | 4.33 |
@@ -892,7 +885,6 @@ To be REDON as bounded by CPU in this test
 | Disk Type | Disk IOPS | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
 | --: | --: | --: | --: | --: | --: |
 | PROVISIONED | 1000 | 4 | 85 | 1267 | 1085 |
-| PROVISIONED | 3000 | 40 | 42 | 33623 | 1909 |
 | PROVISIONED | 3000 | 11 | 81 | 9558 | 3421 |
 | PROVISIONED | 4500 | 19 | 71 | 15953 | 5161 |
 | PROVISIONED | 6000 | 31 | 54 | 26306 | 6942 |

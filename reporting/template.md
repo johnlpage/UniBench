@@ -1173,13 +1173,14 @@ being limited by it.
   "collection": "results",
   "pipeline": [
     { "$match": {"_id.testname" : "query_full"}},
+{ "$sort" : { "_id.order":1}},
     { "$project": { "comment":"$variant.comment",
 "nQueries" : "$testResults.nQueries",
                   "durationS": {"$round":{"$divide":[ "$duration",1000]}},
                   "_id": 0,
                   "qps" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$testResults.nQueries"]}, "$duration"]}]}
-     }},
-{ "$sort" : { "start_time":1}}
+     }}
+
   ],
   "columns": ["comment","durationS","qps"],
   "headers": ["Query Type", "Time Taken (s)", "Speed (Queries/s)"]
@@ -1193,6 +1194,7 @@ being limited by it.
   "collection": "results",
   "pipeline": [
     {"$match": {"_id.testname" : "query_full" }},
+{ "$sort" : { "_id.order":1}},
     { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
     { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
     { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
@@ -1222,8 +1224,8 @@ being limited by it.
         }
     },
     { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
-  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
-  {"$sort":{ "start_time": 1}}],
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}}
+],
 
     "columns": ["comment","meancpu","iowait","cachePageReadPerSecondKB","meanIops"],
     "headers": ["Query Type",  "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS"]

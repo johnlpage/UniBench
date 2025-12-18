@@ -78,37 +78,6 @@
       "limit": 20
     },
     {
-      "order": 8,
-      "comment": "20 documents, 1 term, not cached",
-      "nQueries": 4000000,
-      "query": {
-        "group": "RANDINT(1,150000)"
-      },
-      "limit": 20
-    },
-    {
-      "order": 9,
-      "comment": "20 documents, 380 skipped, 1 term, not cached",
-      "nQueries": 4000000,
-      "query": {
-        "group": "RANDINT(1,150000)"
-      },
-      "limit": 20,
-      "skip": 380
-    },
-    {
-      "order": 10,
-      "comment": "20 documents, 380 range skipped, 1 term, not cached",
-      "nQueries": 4000000,
-      "query": {
-        "group": "RANDINT(1,150000)",
-        "group_seq_i": {
-          "$gte": 380
-        }
-      },
-      "limit": 20
-    },
-    {
       "order": 11,
       "comment": "1 Document, 2 terms, partial index, not cached",
       "nQueries": 4000000,
