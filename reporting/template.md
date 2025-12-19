@@ -1122,28 +1122,31 @@ in the flags.
 
 ## High-level comparison of querying types
 
-___THIS PART IS STILL UNDER CONSTRUCTION AND BEING VALIDATED___
-__TO BE REDONE AS LARGER INSTANCE MEANT TOO MUCH CACHING, INCREAS DATA SIZE__
-
 ### Description
 
 This looks at a high level at various forms of simple indexed querying,
-including those with an imperfect index. The test inserts 5,000,000 4KB
-Documents. These are divided into 12,500 groups with the field 'group' having an
-integer group id. There are 400 documents in each group. The documents in a
-group are not inserted contiguously in the database, as we would not expect
-them to be in a real-world collection.
+including those with an imperfect index. The test inserts 60 Million 1KB
+documents and then runs a series of queries against them. These tests are on an
+M40 with 200GB Standard disks.
+
+These are divided into 150,000 groups with the field 'group' having an integer
+group id. There are 400 documents in each group. The documents in a group are
+not inserted contiguously in the database, as we would not expect them to be in
+a real-world collection. As the documents are 1KB in size and there are 150,000
+groups we can make a reasonable assumption the no database page (28KB post
+compression) will contain two documents from the same group.
 
 Tests run on the whole data set and on a subset to show cached and uncached
-results. Tests may fetch a single document, a set from the same group or a
-single document from many different groups.
+results where possible. Tests may fetch a single document, a set from the same
+group or a single document from many different groups.
 
 Within the group the field group_seq has a value 0–400 allowing us to fetch a
 specific group and sequence number to investigate compound indexing. The field
 group_seq_i is the same as group_seq but indexed.
 
-We only retrieve the _id for each document to avoid measuring network cost or
-being limited by it.
+We explicity return the value of a non-existent field to force the server to
+fetch and scan the document as a non-covered projection would. This is actually
+worst-case as a projection can return as soon as it finds all the fields.
 
 ### Base Atlas Instance
 
@@ -1205,6 +1208,9 @@ being limited by it.
     { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
                                                                             "$before_status.wiredTiger.block-manager.bytes written"]}}},
     { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
+
+    { "$set" : { "networkBytesOut" : {"$subtract" : [ "$after_status.network.physicalBytesOut", "$before_status.network.physicalBytesOut"]}}},
+
     { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
     { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
     { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
@@ -1214,60 +1220,102 @@ being limited by it.
     { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
     { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
     { "$set" : { "journalPerSecondKB" :{"$round": [ { "$divide" : [ "$journalWrite", "$duration"]},2]}}},
-
+    { "$set" : { "networkOutPerSecondKB" :{"$round": [ { "$divide" : [ "$networkBytesOut", "$duration"]},2]}}},
     {"$project": { "comment":"$variant.comment", "threads":"$variant.numberOfThreads","index":"$variant.indexUpdate","journalWrite":1,
                  "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
                 "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
-                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,"networkOutPerSecondKB":1,
                 "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
                 "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
         }
     },
     { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
   { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}}
+
 ],
 
-    "columns": ["comment","meancpu","iowait","cachePageReadPerSecondKB","meanIops"],
-    "headers": ["Query Type",  "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)", "O/S IOPS"]
+    "columns": ["comment","meancpu","iowait","cachePageReadPerSecondKB","networkOutPerSecondKB","meanIops"],
+    "headers": ["Query Type",  "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","KB/s Network out", "O/S IOPS"]
 }
 -->  
 
 ### Analysis
 
-Our headline figure suggest that an M10 instance, when the required data is
-indexed and in cache can acieve 22,500 queries per second. Not shown here a
-previous test with an M30 showed this at ~11,000 so we can work on the basis
-that the best performance on simple queries is 5,500 queries per second per
-core.
+Our headline suggests that an M40 instance, when the required data is
+indexed and in cache, can achieve ~22,000 queries per second.
+This has 70% CPU usage and no IOPS, so it is not immediately obvious
+what is limiting this. It does not appear to be network performance.
 
-Data not being in the cache drops this to 33%, this being on a fast SSD-based
-network disk and being constrained by the 3,000 IOPS available. The drop for
-out-of-cache to IOPS is less than might be expected.
+Not shown here, a previous test with an M30 showed this at ~11,000 so we can
+work on the basis that the best performance on simple queries is 5,500 queries
+per second per core.
+
+Data not being in the cache drops this by 83% this being on a fast SSD-based
+network disk and being presumably constrained by the 3,000 IOPS available.
 
 When we move to a single index lookup but retrieving many documents from the
-same simple query, we see our QPS drop to 3,800. In this case each query is
+same simple query, we see our QPS drop to 5,300. In this case each query is
 fetching 100 documents, so the overall docs/s is higher, this is partly down to
-network round trip overheads making fetching one document queries inefficient.
+network round trip overheads making fetching one document queries less
+efficient. The first Query is finding 22,000 documents/s the second is finding
+more than 500,000 document/s.
 
-We can see that when performing paging, a range-based page can be 50% faster
-than a skip-based page once the number of pages skipped is around 20.
+Retrieving many documents where none are in the cache is brutally slow at 150
+qps; This is a fully indexed query where the FETCH is needing to perform an IO
+operation. If each returned document needs its own disk read then our 3,000 IOPS
+should allow us only 30 queries per second, we can assume we are therefore
+getting some benefit from the OK cache. We are reading 9,200 pages into
+database cache per second with only 3,400 IOPS. This is from readahead (Where
+the OS reads a bit more of a file than requested and holds it in the OS
+filesystem cache) and the size of an IOP (256K).
 
-WHen cached, retriving 100 documents from a single query term is about 20%
-faster than retriving 100 documents with a 100 term $in clause. But this
-includes the fetch cost of the 100 documents too. The tests suggest 66% of the
-time is spent in the FETCH, if we subract that, we can see that 100 index
-lookups is almost the same speed as one index lookup.
+We can see that when performing paging, a range-based page retrieval using $gt
+can be 50% faster than a skip-based page once the number of pages skipped is
+around 20. This is despite the fact MongoDB no-longer fetches the intermediate
+documents. With only 20 retrieved oer group it is not practical to test this
+out-of-cache.
+
+When we identify a single document with a compound index on two fields, we are
+seeing 14K queries per second; This is 35% slower than a single field index
+lookup, it also uses 10% more CPU, the assumption here is that the cmore complex
+query processing is what is slowing it. It is also possible that there are
+optimal paths for a query on _id that are not followed when querying by two
+other fields.
+
+Conversely - when we query by two terms but only one is indexes we need to read
+multiple documents and filter them to find the match. This then ends up with a
+query that is not cached, and our performance drops from 10,000 queries per
+second to only 22. This shows how critical it is to have the required compound
+index.
+
+When the data is cached, retrieving 100 documents with a 100 term $in clause is
+about 40% slower than retrieving them with a single query term. This includes
+the cost of the fetch. If we can do 22K single lookup single fetch queries per
+second and 5,300 single lookup, 100 fetch queries. We can invert this.
+
+```
+L + F = 4,5s per 100,000 queries
+L + 100F = 18.6s per 100,000 queries
+
+99F = 14.1s per 100,000 queries
+
+100L + 100F = 26.7s per 100,000 queries
+100L = 26.7 - 14.1 = 12.6s per 100,000 queries
+L = 0.126s per 100,000 queries
+L = 800,000 QPS
+```
+
+This suggests we can perform about 800,000 lookups per second or that adding
+100 to our query adds about 1ms.
 
 ### Key Takeaways
 
 * When considering query speed, don't think of queries per second alone, think
   of documents returned per second.
-* When reading out of cache throughput is limited by IOPS as random reads
-  required
-* Imperfectly indexed queries requiring a FILTER the doucment have a large
-  overhead.
-* Imperfectly indexed documents requiring an out-of-cache FETCH then a FILTER
-  have huge overhead.
+* When reading out of cache throughput is limited by IOPS as random reads are
+  required, readahead helps though.
+* Imperfectly indexed queries requiring a FILTER the document have a large
+  overhead. Especially if not in cache.
 * Many (100) terms in a $in clause are almost as fast as a single term.
 
 ## Comparing the number of documents retrieved after index lookup
@@ -1275,10 +1323,10 @@ lookups is almost the same speed as one index lookup.
 ### Description
 
 This test fetches N documents identified by a single indexed key comparing both
-cached and uncached options. It projects and returns only the _id field to the
-client for each to avoid measuring network constraints. To fetch _ id it needs
-to FETCH the entire document into cache  _id is not in the index used for
-retrieval and cannot be covered.
+cached and uncached options. It projects and returns only a non existant field
+as null to the client for each to avoid measuring network constraints.
+It needs to FETCH the entire document into cache as the field returned is not in
+the index used for retrieval and cannot be covered.
 
 This test shows how the performance is impacted by the number of documents
 retrieved. Fetching more than 101 documents further requires a second network
@@ -1372,12 +1420,21 @@ be modified with batchsize if the specific number is known.
 
 ### Analysis
 
+What we see here is that cache is not all-or-nothing, when we are using a
+portion of our working set, then some caching is happening. For example, the
+results for a single document are the same for both as we are actually caching
+the first document in every group, so the 1 document, not in cache result is
+actually in cache.
+
+As the number of documents per group returned grows, the ability to cache
+decreases
+to the point where we have fully out-of-cache reads as shown in the table above.
+
 ## Impact of IOPS on out-of-cache query performance
 
 ### Description
 
-THis test measures impact available IOPS have on read performance.
-To be REDON as bounded by CPU in this test
+THis test measures the impact available IOPS have on read performance.
 
 ### Base Atlas Instance
 
@@ -1466,11 +1523,13 @@ To be REDON as bounded by CPU in this test
 
 ### Analysis
 
-Retrival speed is not proportional ti IOPS provisioned
-Above 3,000 IOPS CPU is significant (decompressoin)
-REDO Test with more CPU!
+Retrieval speed appears to be superlinear with IOPS, a 50% increase in
+IOPS results in a doubling of the query speed, a 100% increase in IOPS results
+in a quadrupling of the query speed. Conversely, a 66% decrease in IOPS resulted
+in an 85% decrease in query speed. This warrants further investigation.
 
-### Key Takeaways
+What we do see is reduced IO wait times and increased CPU usage, but it is
+unexpected for these to be superlinear.
 
 ## To Add
 

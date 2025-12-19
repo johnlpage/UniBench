@@ -689,28 +689,31 @@ in the flags.
 
 ## High-level comparison of querying types
 
-___THIS PART IS STILL UNDER CONSTRUCTION AND BEING VALIDATED___
-__TO BE REDONE AS LARGER INSTANCE MEANT TOO MUCH CACHING, INCREAS DATA SIZE__
-
 ### Description
 
 This looks at a high level at various forms of simple indexed querying,
-including those with an imperfect index. The test inserts 5,000,000 4KB
-Documents. These are divided into 12,500 groups with the field 'group' having an
-integer group id. There are 400 documents in each group. The documents in a
-group are not inserted contiguously in the database, as we would not expect
-them to be in a real-world collection.
+including those with an imperfect index. The test inserts 60 Million 1KB
+documents and then runs a series of queries against them. These tests are on an
+M40 with 200GB Standard disks.
+
+These are divided into 150,000 groups with the field 'group' having an integer
+group id. There are 400 documents in each group. The documents in a group are
+not inserted contiguously in the database, as we would not expect them to be in
+a real-world collection. As the documents are 1KB in size and there are 150,000
+groups we can make a reasonable assumption the no database page (28KB post
+compression) will contain two documents from the same group.
 
 Tests run on the whole data set and on a subset to show cached and uncached
-results. Tests may fetch a single document, a set from the same group or a
-single document from many different groups.
+results where possible. Tests may fetch a single document, a set from the same
+group or a single document from many different groups.
 
 Within the group the field group_seq has a value 0–400 allowing us to fetch a
 specific group and sequence number to investigate compound indexing. The field
 group_seq_i is the same as group_seq but indexed.
 
-We only retrieve the _id for each document to avoid measuring network cost or
-being limited by it.
+We explicity return the value of a non-existent field to force the server to
+fetch and scan the document as a non-covered projection would. This is actually
+worst-case as a projection can return as soon as it finds all the fields.
 
 ### Base Atlas Instance
 
@@ -738,25 +741,30 @@ being limited by it.
 
 ### Resource Usage
 
-| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | O/S IOPS |
-| --: | --: | --: | --: | --: |
-| 1 document, 1 term,  cached, indexed. | 70 | 0 | 0 | 10 |
-| 1 document, not cached, indexed. | 24 | 64 | 4069 | 3477 |
-| 100 documents,1 term, cached, indexed  | 73 | 0 | 2 | 11 |
-| 100 documents, 1 term, not cached, indexed | 25 | 66 | 9204 | 3486 |
-| 20 Documents, 1 term, cached | 76 | 0 | 1 | 12 |
-| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 1 | 10 |
-| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 1 | 9 |
-| 1 Document, 2 terms, partial index, not cached | 10 | 81 | 3960 | 3420 |
-| 1 Document, 2 terms, compound index,  cached | 76 | 0 | 1 | 11 |
-| 100 Documents, 100 Terms, indexed, cached | 77 | 0 | 1 | 13 |
-| 100 Documents, 100 Terms, indexed, not cached | 15 | 81 | 3891 | 3474 |
+| Query Type | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | KB/s Network out | O/S IOPS |
+| --: | --: | --: | --: | --: | --: |
+| 1 document, 1 term,  cached, indexed. | 70 | 0 | 0 | 5237.03 | 10 |
+| 1 document, not cached, indexed. | 24 | 64 | 4069 | 908.77 | 3477 |
+| 100 documents,1 term, cached, indexed  | 73 | 0 | 2 | 6078.74 | 11 |
+| 100 documents, 1 term, not cached, indexed | 25 | 66 | 9204 | 241.9 | 3486 |
+| 20 Documents, 1 term, cached | 76 | 0 | 1 | 4581.83 | 12 |
+| 20 Documents, 380 skipped, 1 term, cached | 78 | 0 | 1 | 2764.32 | 10 |
+| 20 documents, 380 range skipped, 1 term, cached | 77 | 0 | 1 | 4405.03 | 9 |
+| 1 Document, 2 terms, partial index, not cached | 10 | 81 | 3960 | 76.63 | 3420 |
+| 1 Document, 2 terms, compound index,  cached | 76 | 0 | 1 | 3512.08 | 11 |
+| 100 Documents, 100 Terms, indexed, cached | 77 | 0 | 1 | 4234.06 | 13 |
+| 100 Documents, 100 Terms, indexed, not cached | 15 | 81 | 3891 | 112.34 | 3474 |
   
 
 ### Analysis
 
-Our headline figure suggest that an M10 instance, when the required data is
-indexed and in cache can acieve 22,500 queries per second. Not shown here a
+Our headline suggests that an M40 instance, when the required data is
+indexed and in cache, can achieve ~22,000 queries per second.
+This has 70% CPU usage and no IOPS so it is not immediately obvious
+what is limiting this. Each query is returning a single, tiny document so we
+should assume thsi fits into a single 1500 byte TCP packet.
+
+t shown here a
 previous test with an M30 showed this at ~11,000 so we can work on the basis
 that the best performance on simple queries is 5,500 queries per second per
 core.
