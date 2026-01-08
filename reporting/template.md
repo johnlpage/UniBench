@@ -200,10 +200,11 @@ ony using about 33% of our available IOPS. We can assume we are not network or
 client CPU constrained here, so what is limiting our writer throughput?
 
 The answer is the disk throughput. With "Standard" gp3 disks we are limited to
-125MB/s for any drive <170GB. This then goes up at 5MB/s per additional 10GB up
-to 260GB. Thereafter, rising at 1MB/s per additional 10GB.
+125MB/s for any drive <170GB at which point you get an additional 85MB/s.
+This then goes up at 5MB/s per additional 10GB up to 260GB. Thereafter, rising
+at 1MB/s per additional 10GB.
 
-Out 200GB volume has a maximum write throughput of 125 + 85M + 15 = 225MB/s and
+Our 200GB volume has a maximum write throughput of 125 + 85M + 15 = 225MB/s and
 this is what limits our total write speed.
 
 Each inserted document is compressed and then needs to be inserted in the Oplog,
