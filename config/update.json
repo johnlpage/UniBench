@@ -1,0 +1,51 @@
+{
+  "testClassName": "com.mongodb.solcon.tests.UpdateTest",
+  "numberOfThreads": 32,
+  "database": "unibench",
+  "collection": "updates",
+  "initialDocsToInsert": 15000000,
+  "writeBatchSize": 1000,
+  "docSizeKB": 4.0,
+  "comment": " Approx 12 integer fields per KB of document size",
+  "variants": [
+    {
+      "nUpdates": 500000,
+      "nFields": 1,
+      "docRange": 1500000
+    },
+    {
+      "nUpdates": 500000,
+      "nFields": 10,
+      "docRange": 1500000
+    },
+    {
+      "nUpdates": 500000,
+      "nFields": 20,
+      "docRange": 1500000
+    },
+    {
+      "nUpdates": 500000,
+      "nFields": 50,
+      "docRange": 1500000
+    },
+    {
+      "documentValidation": true,
+      "nUpdates": 500000,
+      "nFields": 50,
+      "docRange": 1500000
+    },
+    {
+      "nUpdates": 500000,
+      "nFields": 50,
+      "expressive": true,
+      "docRange": 1500000
+    },
+    {
+      "nUpdates": 500000,
+      "nFields": 1,
+      "docRange": 15000000
+    }
+  ],
+  "warmup": false
+}
+
