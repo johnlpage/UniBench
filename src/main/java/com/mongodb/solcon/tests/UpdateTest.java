@@ -46,7 +46,7 @@ public class UpdateTest extends BaseMongoTest {
         maxFieldsPerObject =
                 Objects.requireNonNullElse(testConfig.getInteger("maxFieldsPerObject"), 200);
 
-        // Approx Doc Size in bytes - get from top level unless in variant
+        // Approx Doc Size in bytes - get from the top level unless in variant
         if (testConfig.getDouble("docSizeKB") != null) {
             docsizeBytes = (int) (testConfig.getDouble("docSizeKB") * 1024);
         }
