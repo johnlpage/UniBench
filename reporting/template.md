@@ -1041,6 +1041,111 @@ volume of data written per flush.
   limited to ~4,000 updates/s with more threads slowing this down.
 * In general avoid having hot documents unless they are really not very hot.
 
+# Comparison of complexity of updates and schema validation
+
+### Description
+
+Using UpdateOne() we update 4KB document both in and out of cache incrementing
+different numbers of fields with _$inc_. We also use an update with $expr to perform
+the update on 50 fields and we perform a $inc update on 50 fields with scheam validation.
+
+### Base Atlas Instance
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "update"}},
+    {"$limit":1},
+    {"$project": {
+"atlasInstanceType":"$bench_config.atlasInstanceType",
+ "atlasDiskType": "$bench_config.atlasDiskType",
+ "atlasIOPS": "$bench_config.atlasIOPS",
+"atlasDiskSizeGB":"$bench_config.atlasDiskSizeGB"
+}}
+   ],
+    "columns": ["atlasInstanceType", "atlasDiskType", "atlasIOPS", "atlasDiskSizeGB"],
+    "headers": ["Instance Type", "Disk Type", "Disk IOPS", "Disk Size"]
+}
+-->  
+
+### Performance
+
+<!-- MONGO_TABLE: 
+
+{
+  "collection": "results",
+  "pipeline": [
+    { "$match": {"_id.testname" : "update"}},
+    { "$set" : { "opTimeWrites": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "OP_EXECUTION_TIME_WRITES"]}}}}}},
+    { "$set" : { "opTimeWrites" : { "$filter": {  "input" : "$opTimeWrites.dataPoints", 
+                                                  "cond": { "$ne" : [ "$$this.value",null]}}}}},
+    { "$set" : { "opLatency" : {"$round": [{ "$avg" : "$opTimeWrites.value"},2]}}},
+
+    { "$project": {"comment":"$variant.comment","opLatency":1, "function":"$variant.updateFunction","upsert":"$variant.upsert","percentnew":"$variant.percentNew",
+                  "durationS": {"$round":{"$divide":[ "$duration",1000]}},
+                  "_id": 0,
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.nUpdates"]}, "$duration"]}]}
+     }},
+  {"$sort":{ "comment": 1}}
+  ],
+  "columns": ["comment","durationS","DocsPerSecond","opLatency"],
+  "headers": [ "Description","Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
+}
+-->  
+
+### Resource Usage
+
+<!-- MONGO_TABLE: 
+{
+  "collection": "results",
+  "pipeline": [
+    {"$match": {"_id.testname" : "update" }},
+    { "$set" :  { "durationS": {"$round":{"$divide":[ "$duration",1000]}}}},
+    { "$set" : { "userCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_USER"]}}}}}},
+    { "$set" : { "iowaitCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_IOWAIT"]}}}}}},
+    { "$set" : { "kernelCPU": {"$first": {"$filter": { "input": "$metrics.measurements", "cond": { "$eq": ["$$this.name", "SYSTEM_NORMALIZED_CPU_KERNEL"]}}}}}},
+    { "$set" : { "allCPU" : { "$zip" : {"inputs":[ "$kernelCPU.dataPoints.value", "$userCPU.dataPoints.value"]}}}},
+    { "$set" : { "cpuReadings": { "$map" : { "input": "$allCPU", "in" : { "$sum": "$$this"}}}}},
+    { "$set" : { "cacheReadIn" : {"$subtract" : [ "$after_status.wiredTiger.cache.pages read into cache", "$before_status.wiredTiger.cache.pages read into cache"]}}},
+    { "$set" : { "cacheWriteOut" :{"$subtract" : [    "$after_status.wiredTiger.block-manager.bytes written", 
+                                                                            "$before_status.wiredTiger.block-manager.bytes written"]}}},
+    { "$set" : { "journalWrite" : {"$subtract" : [ "$after_status.wiredTiger.log.total size of compressed records", "$before_status.wiredTiger.log.total size of compressed records"]}}},
+    { "$set" : { "totalIops" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_IOPS_TOTAL"]}}}}}},
+    { "$set" : { "meanIops" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalIops.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalWrite" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_WRITE"]}}}}}},
+    { "$set" : { "meanWrite" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalWrite.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "totalRead" : {"$first": {"$filter": { "input": "$metrics.diskMetrics", "cond": { "$eq": ["$$this.name", "DISK_PARTITION_THROUGHPUT_READ"]}}}}}},
+    { "$set" : { "meanRead" : {"$round": { "$avg" : { "$filter" : { "input" : "$totalRead.dataPoints.value", "cond" : {"$ne" :[ "$$this",null]}}} }}}},
+    { "$set" : { "cachePageReadPerSecondKB" : {"$round" : { "$divide" : [ "$cacheReadIn", "$durationS"]}}}},
+    { "$set" : { "compressedDataPerSecondKB" :{"$round": { "$divide" : [ "$cacheWriteOut", "$duration"]}}}},
+    { "$set" : { "journalPerSecondKB" :{"$round": [ { "$divide" : [ "$journalWrite", "$duration"]},2]}}},
+
+    {"$project": { "comment":"$variant.comment","threads":"$variant.numberOfThreads","index":"$variant.indexUpdate","journalWrite":1,
+                 "userCPU":1,"meanIops":1,"meanWrite":{"$round":{"$divide":["$meanWrite",1048576]}},"meanRead":{"$round":{"$divide":["$meanRead",1048576]}},"idtype": "$variant.idType",
+                "docSizeKB": "$variant.docSizeKB","cacheWriteOut":1,"journalPerSecondKB" :1,"journalWrite":1,
+                "cachePageReadPerSecondKB":1,"compressedDataPerSecondKB" :1,
+                "cacheReadInMB" : { "$floor": { "$divide": [ "$cacheReadIn",1048576 ] }},
+                "meancpu": {"$round":{ "$avg" : "$cpuReadings"}}, "iowait" :{"$round": { "$avg" : "$iowaitCPU.dataPoints.value"}}
+        }
+    },
+    { "$set" : { "estimatedIOPS" : { "$round": { "$add" : [ "$cachePageReadPerSecondKB", { "$divide" : ["$journalPerSecondKB",256]},
+  { "$divide" : ["$compressedDataPerSecondKB",256]}]}}}},
+  {"$sort":{ "comment": 1}}],
+
+    "columns": ["comment","meancpu","iowait","cachePageReadPerSecondKB","compressedDataPerSecondKB","journalPerSecondKB","meanIops","meanWrite"],
+    "headers": ["Description", "CPU Usage (%)", "Time waiting for I/O (%)","Read into Cache (Pages/s)","Write from Cache (KB/s)","Write to WAL (KB/s)", "O/S IOPS","O/S Write (MB/s)"]
+}
+-->  
+
+### Analysis
+
+TBD
+
+### Key Takeaways
+
+* TBd
+
 ## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 
 ### Description
@@ -1532,32 +1637,3 @@ in an 85% decrease in query speed. This warrants further investigation.
 What we do see is reduced IO wait times and increased CPU usage, but it is
 unexpected for these to be superlinear.
 
-## To Add
-
-* Ingesting data
-    * ~~Document size~~
-    * ~~Batching vis Single Insert~~
-    * ~~ObjectId vs BusinessID vs UUID~~
-    * ~~number of indexes and cache~~
-    * ~~Iops (Provisioned vi Standard)~~
-    * ~~Instance sizes~~
-
-* Reading Data
-    * ~~Retrieval single By Key~~
-    * ~~Retrieval set By Single Key~~
-    * ~~Retrieval page N with skip~~
-    * ~~Retrieval next page with range quey~~
-    * ~~Retrieval part index~~
-    * ~~Retrieval $in~~
-    * ~~Retrieval out of cache~~
-* Modifying Data
-    * Replace
-    * Replace and cache
-    * Updates
-    * Replace
-    * Update
-    * Impacted indexes
-* Aggregation
-    * Aggregation group
-    * Aggregation ¢lookup
-* Deletion

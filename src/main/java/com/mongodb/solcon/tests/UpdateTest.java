@@ -162,7 +162,7 @@ public class UpdateTest extends BaseMongoTest {
     }
 
     public void run() {
-
+        int nUpdatesRun = 0;
         try {
             int initialDocsToInsert = testConfig.getInteger("initialDocsToInsert", 100000);
 
@@ -190,7 +190,7 @@ public class UpdateTest extends BaseMongoTest {
                         "nUpdatesPerThread (nupdates/nthreads) is greater than initialDocsToInsert - this is not allowed");
                 return;
             }
-            int i;
+
 
             Document update;
 
@@ -207,11 +207,14 @@ public class UpdateTest extends BaseMongoTest {
                 }
                 update = new Document("$inc", mutation);
             }
-            long nupdates = 0;
+
             // If a Test Time is defined then this overrides nQueries
             long startSecs = new Date().getTime();
+            if (testReturnInfo != null) {
+                testReturnInfo.put("nUpdates", 0);
+            }
 
-            for (i = 0; i < nUpdatesPerThread || testTimeSecs > 0; i++) {
+            for (nUpdatesRun = 0; nUpdatesRun < nUpdatesPerThread || testTimeSecs > 0; nUpdatesRun++) {
                 int id;
 
                 id = RandomUtils.nextInt(1, docRange);
@@ -234,15 +237,19 @@ public class UpdateTest extends BaseMongoTest {
                 if (ur.getModifiedCount() != 1) {
                     logger.error("Update failed for id {}", id);
                 }
-                nupdates += ur.getMatchedCount();
 
                 logger.debug("Update Result {}", ur);
 
             }
-            logger.debug("Thread {} Updates {}", threadNo, nupdates);
+
         } catch (Exception e) {
             logger.error("An error occurred {}", e.getMessage());
             e.printStackTrace();
+        }
+        if (testReturnInfo != null) {
+            Integer finalNUpdatesRun = nUpdatesRun;
+            testReturnInfo.compute(
+                    "nUpdates", (k, v) -> (v == null) ? finalNUpdatesRun : (Integer) v + finalNUpdatesRun);
         }
     }
 

@@ -632,6 +632,55 @@ volume of data written per flush.
   limited to ~4,000 updates/s with more threads slowing this down.
 * In general avoid having hot documents unless they are really not very hot.
 
+# Comparison of complexity of updates and schema validation
+
+### Description
+
+Using UpdateOne() we update 4KB document both in and out of cache incrementing
+different numbers of fields with _$inc_. We also use an update with $expr to perform
+the update on 50 fields and we perform a $inc update on 50 fields with scheam validation.
+
+### Base Atlas Instance
+
+| Instance Type | Disk Type | Disk IOPS | Disk Size |
+| --: | --: | --: | --: |
+| M40 | STANDARD | 3000 | 200 |
+  
+
+### Performance
+
+| Time Taken (s) | Update Speed (docs/s) | Average Op Latency (ms) |
+| --: | --: | --: |
+| 902 |  | 10.29 |
+| 901 |  | 23.48 |
+| 901 |  | 12.47 |
+| 902 |  | 13.67 |
+| 901 |  | 13.46 |
+| 901 |  | 14.86 |
+| 901 |  | 13.99 |
+  
+
+### Resource Usage
+
+| Num Threads | Updating Index | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) |
+| --: | --: | --: | --: | --: | --: | --: | --: | --: |
+|  |  | 66 | 17 | 4132 | 103675 | 0.06 | 4083 | 92 |
+|  |  | 45 | 37 | 2605 | 69594 | 0.05 | 3796 | 65 |
+|  |  | 62 | 22 | 3535 | 77207 | 0.07 | 4013 | 72 |
+|  |  | 61 | 22 | 3234 | 68667 | 1590.88 | 3819 | 63 |
+|  |  | 59 | 25 | 3237 | 69816 | 1121.76 | 3905 | 66 |
+|  |  | 68 | 16 | 3178 | 63749 | 1485.85 | 3791 | 61 |
+|  |  | 61 | 22 | 3170 | 66886 | 1576.22 | 3825 | 63 |
+  
+
+### Analysis
+
+TBD
+
+### Key Takeaways
+
+* TBd
+
 ## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 
 ### Description
@@ -955,32 +1004,3 @@ in an 85% decrease in query speed. This warrants further investigation.
 What we do see is reduced IO wait times and increased CPU usage, but it is
 unexpected for these to be superlinear.
 
-## To Add
-
-* Ingesting data
-    * ~~Document size~~
-    * ~~Batching vis Single Insert~~
-    * ~~ObjectId vs BusinessID vs UUID~~
-    * ~~number of indexes and cache~~
-    * ~~Iops (Provisioned vi Standard)~~
-    * ~~Instance sizes~~
-
-* Reading Data
-    * ~~Retrieval single By Key~~
-    * ~~Retrieval set By Single Key~~
-    * ~~Retrieval page N with skip~~
-    * ~~Retrieval next page with range quey~~
-    * ~~Retrieval part index~~
-    * ~~Retrieval $in~~
-    * ~~Retrieval out of cache~~
-* Modifying Data
-    * Replace
-    * Replace and cache
-    * Updates
-    * Replace
-    * Update
-    * Impacted indexes
-* Aggregation
-    * Aggregation group
-    * Aggregation ¢lookup
-* Deletion
