@@ -5,9 +5,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.ValidationAction;
-import com.mongodb.client.model.ValidationLevel;
-import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.solcon.BaseMongoTest;
 import com.mongodb.solcon.DocumentFactory;
@@ -125,12 +122,10 @@ public class UpdateTest extends BaseMongoTest {
             properties.put(fieldName, fieldSchema);
         }
 
-        Document validator = new Document("$jsonSchema",
+        return new Document("$jsonSchema",
                 new Document("bsonType", "object")
                         .append("properties", properties)
         );
-
-        return validator;
     }
 
     /**
@@ -148,10 +143,6 @@ public class UpdateTest extends BaseMongoTest {
             logger.info("Applying schema validation to collection: {}", collection.getNamespace().getCollectionName());
             logger.debug("Validator schema: {}", validator.toJson());
 
-            ValidationOptions validationOptions = new ValidationOptions()
-                    .validator(validator)
-                    .validationLevel(ValidationLevel.MODERATE)
-                    .validationAction(ValidationAction.ERROR);
 
             database.runCommand(new Document("collMod", collection.getNamespace().getCollectionName())
                     .append("validator", validator)
@@ -181,7 +172,12 @@ public class UpdateTest extends BaseMongoTest {
             int nUpdatesPerThread = Math.toIntExact(nUpdates / nThreads);
             int docRange = variant.getInteger("docRange", 100000);
             boolean expressive = variant.getBoolean("expressive", false);
-
+            int testTimeSecsGlobal = testConfig.getInteger("testTimeSecs", 0);
+            int testTimeSecsVariant = variant.getInteger("testTimeSecs", 0);
+            int testTimeSecs = testTimeSecsVariant > 0 ? testTimeSecsVariant : testTimeSecsGlobal;
+            if (testTimeSecs > 0 && threadNo == 0) {
+                logger.info("Test time is set to {} seconds", testTimeSecs);
+            }
             if (threadNo == 0) {
                 logger.info(
                         "Updates Per Thread = {}, Threads = {} , nFields = {}  ",
@@ -198,30 +194,39 @@ public class UpdateTest extends BaseMongoTest {
 
             Document update;
 
+            Document mutation = new Document();
             if (expressive) {
-                Document mutation = new Document();
                 for (int j = 1; j < nFields; j++) {
                     mutation.put("intfield" + j,
                             new Document("$add", Arrays.asList("$intfield" + j, 1)));
                 }
                 update = new Document("$set", mutation);
             } else {
-                Document mutation = new Document();
                 for (int j = 1; j <= nFields; j++) {
                     mutation.put("intfield" + j, 1);
                 }
                 update = new Document("$inc", mutation);
             }
-            int nupdates = 0;
-            for (i = 0; i < nUpdatesPerThread; i++) {
+            long nupdates = 0;
+            // If a Test Time is defined then this overrides nQueries
+            long startSecs = new Date().getTime();
+
+            for (i = 0; i < nUpdatesPerThread || testTimeSecs > 0; i++) {
                 int id;
 
                 id = RandomUtils.nextInt(1, docRange);
                 Bson query = Filters.eq("_id", id);
+
+                long now = new Date().getTime();
+                if (testTimeSecs > 0 && (now - startSecs) / 1000 >= testTimeSecs) {
+
+                    break;
+                }
+
                 UpdateResult ur;
                 if (expressive) {
                     ur =
-                            collection.updateOne(query, Arrays.asList(update));
+                            collection.updateOne(query, List.of(update));
                 } else {
                     ur =
                             collection.updateOne(query, update);
@@ -231,7 +236,7 @@ public class UpdateTest extends BaseMongoTest {
                 }
                 nupdates += ur.getMatchedCount();
 
-                logger.debug("Update Result {}", ur.toString());
+                logger.debug("Update Result {}", ur);
 
             }
             logger.debug("Thread {} Updates {}", threadNo, nupdates);

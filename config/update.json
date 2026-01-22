@@ -6,42 +6,43 @@
   "initialDocsToInsert": 15000000,
   "writeBatchSize": 1000,
   "docSizeKB": 4.0,
+  "testTimeSecs": 900,
   "comment": " Approx 12 integer fields per KB of document size",
   "variants": [
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 1 field,  cached, indexed.",
       "nFields": 1,
       "docRange": 1500000
     },
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 10 fields,  cached, indexed.",
       "nFields": 10,
       "docRange": 1500000
     },
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 20 fields,  cached, indexed.",
       "nFields": 20,
       "docRange": 1500000
     },
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 15 fields,  cached, indexed.",
       "nFields": 50,
       "docRange": 1500000
     },
     {
+      "comment": "1 document, 50 fields,  validation  cached, indexed.",
       "documentValidation": true,
-      "nUpdates": 500000,
       "nFields": 50,
       "docRange": 1500000
     },
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 50 fields,  $expr  cached, indexed.",
       "nFields": 50,
       "expressive": true,
       "docRange": 1500000
     },
     {
-      "nUpdates": 500000,
+      "comment": "1 document, 1 field, uncached, indexed.",
       "nFields": 1,
       "docRange": 15000000
     }
