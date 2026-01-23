@@ -17,20 +17,92 @@ MongoDB.
 
 <!-- TOC -->
 
-* [Introduction](#introduction)
+* [MongoDB Performance Tables](#mongodb-performance-tables)
+    * [TLDR;](#tldr)
+    * [Table of Contents](#table-of-contents)
+    * [Introduction](#introduction)
 * [Data Ingestion](#data-ingestion)
     * [Expected insert speed by document size](#expected-insert-speed-by-document-size)
+        * [Description](#description)
+        * [Base Atlas Instance](#base-atlas-instance)
+        * [Performance](#performance)
+        * [Resource Usage](#resource-usage)
+        * [Analysis](#analysis)
+        * [Key Takeaways](#key-takeaways)
     * [Impact of client write batch size on write speed](#impact-of-client-write-batch-size-on-write-speed)
+        * [Description](#description-1)
+        * [Base Atlas Instance](#base-atlas-instance-1)
+        * [Performance](#performance-1)
+        * [Resource Usage](#resource-usage-1)
+        * [Analysis](#analysis-1)
+        * [Key Takeaways](#key-takeaways-1)
     * [Impact of primary key type on write speed](#impact-of-primary-key-type-on-write-speed)
+        * [Description](#description-2)
+        * [Base Atlas Instance](#base-atlas-instance-2)
+        * [Performance](#performance-2)
+        * [Resource Usage](#resource-usage-2)
+        * [Analysis](#analysis-2)
+        * [Key Takeaways](#key-takeaways-2)
     * [Impact of number of indexes on write speed](#impact-of-number-of-indexes-on-write-speed)
-    * [Standard vs Provisioned IOPS and Throughput](#standard-vs-provisioned-iops-and-throughput)
+        * [Description](#description-3)
+        * [Base Atlas Instance](#base-atlas-instance-3)
+        * [Performance](#performance-3)
+        * [Resource Usage](#resource-usage-3)
+        * [Analysis](#analysis-3)
+        * [Key Takeaways](#key-takeaways-3)
+    * [Standard vs. Provisioned IOPS and Throughput](#standard-vs-provisioned-iops-and-throughput)
+        * [Description](#description-4)
+        * [Base Atlas Instance](#base-atlas-instance-4)
+        * [Performance](#performance-4)
+        * [Resource Usage](#resource-usage-4)
+        * [Analysis](#analysis-4)
+        * [Key Takeaways](#key-takeaways-4)
     * [Impact of Instance Size on write performance](#impact-of-instance-size-on-write-performance)
+        * [Description](#description-5)
+        * [Base Atlas Instance](#base-atlas-instance-5)
+        * [Performance](#performance-5)
+        * [Resource Usage](#resource-usage-5)
+        * [Analysis](#analysis-5)
+        * [Key Takeaways](#key-takeaways-5)
     * [Impact of hot documents and concurrency on write performance](#impact-of-hot-documents-and-concurrency-on-write-performance)
+        * [Description](#description-6)
+        * [Base Atlas Instance](#base-atlas-instance-6)
+        * [Performance](#performance-6)
+        * [Resource Usage](#resource-usage-6)
+        * [Analysis](#analysis-6)
+        * [Key Takeaways](#key-takeaways-6)
+* [Comparison of complexity of updates and schema validation](#comparison-of-complexity-of-updates-and-schema-validation)
+    * [Description](#description-7)
+    * [Base Atlas Instance](#base-atlas-instance-7)
+    * [Performance](#performance-7)
+    * [Resource Usage](#resource-usage-7)
+    * [Analysis](#analysis-7)
+    * [Key Takeaways](#key-takeaways-7)
     * [Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert](#comparison-of-using-updateone-vs-findoneandupdate-and-upsert-vs-explicit-insert)
+        * [Description](#description-8)
+        * [Performance](#performance-8)
+        * [Base Atlas Instance](#base-atlas-instance-8)
+        * [Analysis](#analysis-8)
+        * [Key Takeaways](#key-takeaways-8)
     * [High-level comparison of querying types](#high-level-comparison-of-querying-types)
+        * [Description](#description-9)
+        * [Base Atlas Instance](#base-atlas-instance-9)
+        * [Performance](#performance-9)
+        * [Resource Usage](#resource-usage-8)
+        * [Analysis](#analysis-9)
+        * [Key Takeaways](#key-takeaways-9)
     * [Comparing the number of documents retrieved after index lookup](#comparing-the-number-of-documents-retrieved-after-index-lookup)
+        * [Description](#description-10)
+        * [Base Atlas Instance](#base-atlas-instance-10)
+        * [Performance](#performance-10)
+        * [Resource Usage](#resource-usage-9)
+        * [Analysis](#analysis-10)
     * [Impact of IOPS on out-of-cache query performance](#impact-of-iops-on-out-of-cache-query-performance)
-    * [To Add](#to-add)
+        * [Description](#description-11)
+        * [Base Atlas Instance](#base-atlas-instance-11)
+        * [Performance](#performance-11)
+        * [Resource Usage](#resource-usage-10)
+        * [Analysis](#analysis-11)
 
 <!-- TOC -->
 
@@ -1041,7 +1113,7 @@ volume of data written per flush.
   limited to ~4,000 updates/s with more threads slowing this down.
 * In general avoid having hot documents unless they are really not very hot.
 
-# Comparison of complexity of updates and schema validation
+## Comparison of update complexity and schema validation
 
 ### Description
 
@@ -1084,13 +1156,13 @@ the update on 50 fields and we perform a $inc update on 50 fields with scheam va
 
     { "$project": {"comment":"$variant.comment","opLatency":1, "function":"$variant.updateFunction","upsert":"$variant.upsert","percentnew":"$variant.percentNew",
                   "durationS": {"$round":{"$divide":[ "$duration",1000]}},
-                  "_id": 0,
-                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$variant.nUpdates"]}, "$duration"]}]}
+                  "_id": 0, "totalUpdates":"$testResults.nUpdates",
+                  "DocsPerSecond" : { "$round" : [ {"$divide": [{"$multiply":[1000,"$testResults.nUpdates"]}, "$duration"]}]}
      }},
   {"$sort":{ "comment": 1}}
   ],
-  "columns": ["comment","durationS","DocsPerSecond","opLatency"],
-  "headers": [ "Description","Time Taken (s)", "Update Speed (docs/s)","Average Op Latency (ms)"]
+  "columns": ["comment","durationS","totalUpdates","DocsPerSecond","opLatency"],
+  "headers": [ "Description", "Time Taken (s)", "TotalUpdates", "Update Speed (docs/s)","Average Op Latency (ms)"]
 }
 -->  
 
@@ -1140,7 +1212,14 @@ the update on 50 fields and we perform a $inc update on 50 fields with scheam va
 
 ### Analysis
 
-TBD
+The results show in this testing I/O is still a significant factor with double figure I/O wait times. Each edited
+document is ~4KB in size meaning an update is a write to the Oplog and WAL(Journal) proportional to the edit
+complexity but a database page (~32KB) to be flushed on checkpoint. Were we to concentrate all our updates
+to a very small subset of pages we woudl get more amortisation but in this case they are spread randomly,
+
+The in-cache tests hit 1.5 Million different documents - with ~8 documents per page and a throughput of ~2000/s
+between checkpoints we hit 120,000 documents - spread over 187,000 pages so mostly each 4KB update means
+32KB of write - although this is NOT a lot of random IOPS it's still 64MB/s of writes.
 
 ### Key Takeaways
 

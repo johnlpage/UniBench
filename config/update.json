@@ -10,39 +10,39 @@
   "comment": " Approx 12 integer fields per KB of document size",
   "variants": [
     {
-      "comment": "1 document, 1 field,  cached, indexed.",
+      "comment": "1 document, cached, 1 field",
       "nFields": 1,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 10 fields,  cached, indexed.",
+      "comment": "1 document, cached, 10 fields",
       "nFields": 10,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 20 fields,  cached, indexed.",
+      "comment": "1 document, cached, 20 fields",
       "nFields": 20,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 15 fields,  cached, indexed.",
+      "comment": "1 document, cached, 50 fields",
       "nFields": 50,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 50 fields,  validation  cached, indexed.",
+      "comment": "1 document, cached, 50 fields, validation",
       "documentValidation": true,
       "nFields": 50,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 50 fields,  $expr  cached, indexed.",
+      "comment": "1 document, cached, 50 fields, $expr",
       "nFields": 50,
       "expressive": true,
-      "docRange": 1500000
+      "docRange": 500000
     },
     {
-      "comment": "1 document, 1 field, uncached, indexed.",
+      "comment": "1 document, uncached, 1 field",
       "nFields": 1,
       "docRange": 15000000
     }
