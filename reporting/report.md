@@ -723,42 +723,46 @@ the update on 50 fields and we perform a $inc update on 50 fields with scheam va
 
 | Description | Time Taken (s) | TotalUpdates | Update Speed (docs/s) | Average Op Latency (ms) |
 | --: | --: | --: | --: | --: |
-| 1 document, 1 field,  cached, indexed. | 903 | 2530127 | 2803 | 10.2 |
-| 1 document, 1 field, uncached, indexed. | 901 | 1124884 | 1249 | 24.22 |
-| 1 document, 10 fields,  cached, indexed. | 901 | 2146472 | 2383 | 12.31 |
-| 1 document, 20 fields,  cached, indexed. | 901 | 2018232 | 2240 | 13.05 |
-| 1 document, 50 fields,  cached, indexed. | 901 | 1888473 | 2096 | 13.83 |
-| 1 document, 50 fields, cached, indexed, $expr | 901 | 1779862 | 1976 | 14.47 |
-| 1 document, 50 fields, cached, indexed, validation | 901 | 1875114 | 2082 | 13.87 |
+| 1 document, cached, 1 field | 901 | 4177328 | 4637 | 5.38 |
+| 1 document, cached, 10 fields | 901 | 3873151 | 4300 | 5.9 |
+| 1 document, cached, 20 fields | 901 | 3685058 | 4091 | 6.28 |
+| 1 document, cached, 50 fields | 901 | 3331796 | 3699 | 6.89 |
+| 1 document, cached, 50 fields, $expr | 901 | 2886748 | 3205 | 7.98 |
+| 1 document, cached, 50 fields, validation | 901 | 3335410 | 3703 | 6.96 |
+| 1 document, uncached, 1 field | 901 | 1142058 | 1268 | 24.21 |
   
 
 ### Resource Usage
 
 | Description | CPU Usage (%) | Time waiting for I/O (%) | Read into Cache (Pages/s) | Write from Cache (KB/s) | Write to WAL (KB/s) | O/S IOPS | O/S Write (MB/s) |
 | --: | --: | --: | --: | --: | --: | --: | --: |
-| 1 document, 1 field,  cached, indexed. | 66 | 16 | 4165 | 111929 | 0.06 | 4235 | 100 |
-| 1 document, 1 field, uncached, indexed. | 43 | 36 | 2450 | 69235 | 0.04 | 3720 | 63 |
-| 1 document, 10 fields,  cached, indexed. | 61 | 21 | 3599 | 85574 | 0.05 | 4079 | 79 |
-| 1 document, 20 fields,  cached, indexed. | 60 | 22 | 3403 | 79233 | 1162.58 | 4053 | 74 |
-| 1 document, 50 fields,  cached, indexed. | 61 | 20 | 3247 | 74378 | 1590.62 | 3984 | 70 |
-| 1 document, 50 fields, cached, indexed, $expr | 68 | 15 | 3219 | 70480 | 1492.47 | 3898 | 66 |
-| 1 document, 50 fields, cached, indexed, validation | 61 | 21 | 3234 | 73372 | 1580.73 | 3972 | 69 |
+| 1 document, cached, 1 field | 84 | 2 | 3955 | 170454 | 0.04 | 4446 | 144 |
+| 1 document, cached, 10 fields | 82 | 3 | 3787 | 152938 | 0.04 | 4542 | 128 |
+| 1 document, cached, 20 fields | 81 | 4 | 3753 | 146727 | 2122.15 | 4469 | 124 |
+| 1 document, cached, 50 fields | 82 | 3 | 3496 | 134415 | 2807.79 | 4282 | 116 |
+| 1 document, cached, 50 fields, $expr | 84 | 3 | 3335 | 113263 | 2417.95 | 4018 | 99 |
+| 1 document, cached, 50 fields, validation | 81 | 4 | 3634 | 131878 | 2808.75 | 4330 | 115 |
+| 1 document, uncached, 1 field | 44 | 38 | 2644 | 70937 | 0.04 | 3730 | 65 |
   
 
 ### Analysis
 
-The results show in this testing I/O is still a significant factor with double figure I/O wait times. Each edited
-document is ~4KB in size meaning an update is a write to the Oplog and WAL(Journal) proportional to the edit
-complexity but a database page (~32KB) to be flushed on checkpoint. Were we to concentrate all our updates
-to a very small subset of pages we woudl get more amortisation but in this case they are spread randomly,
+This is using a batch size of one giving a very significant overhead as we need to make each individual write durable
+and
+have a network round trip. We are seeing only ~5,000 updates/s becauseof the need to use IOPS for flushes – sending
+updates
+in batches would greatly improve the total throughput.
 
-The in-cache tests hit 1.5 Million different documents - with ~8 documents per page and a throughput of ~2000/s
-between checkpoints we hit 120,000 documents - spread over 187,000 pages so mostly each 4KB update means
-32KB of write - although this is NOT a lot of random IOPS it's still 64MB/s of writes.
+The most significant factor by far is where the document to be edited is not in cache and many aditional IOPS are used
+to
+fetch the documents before editing.
 
 ### Key Takeaways
 
-* TBd
+* Send updates in batches where possible
+* complexity has little impact on speed
+* validation has little impact on speed
+* using $expr has little imact on speed.
 
 ## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 

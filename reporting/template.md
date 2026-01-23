@@ -1212,18 +1212,22 @@ the update on 50 fields and we perform a $inc update on 50 fields with scheam va
 
 ### Analysis
 
-The results show in this testing I/O is still a significant factor with double figure I/O wait times. Each edited
-document is ~4KB in size meaning an update is a write to the Oplog and WAL(Journal) proportional to the edit
-complexity but a database page (~32KB) to be flushed on checkpoint. Were we to concentrate all our updates
-to a very small subset of pages we woudl get more amortisation but in this case they are spread randomly,
+This is using a batch size of one giving a very significant overhead as we need to make each individual write durable
+and
+have a network round trip. We are seeing only ~5,000 updates/s becauseof the need to use IOPS for flushes – sending
+updates
+in batches would greatly improve the total throughput.
 
-The in-cache tests hit 1.5 Million different documents - with ~8 documents per page and a throughput of ~2000/s
-between checkpoints we hit 120,000 documents - spread over 187,000 pages so mostly each 4KB update means
-32KB of write - although this is NOT a lot of random IOPS it's still 64MB/s of writes.
+The most significant factor by far is where the document to be edited is not in cache and many aditional IOPS are used
+to
+fetch the documents before editing.
 
 ### Key Takeaways
 
-* TBd
+* Send updates in batches where possible
+* complexity has little impact on speed
+* validation has little impact on speed
+* using $expr has little imact on speed.
 
 ## Comparison of using UpdateOne vs. FindOneAndUpdate and upsert vs. explicit insert
 

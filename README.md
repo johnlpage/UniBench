@@ -1,4 +1,4 @@
-#             
+#                
 
 ## Introduction
 
@@ -14,8 +14,15 @@ the impact schema and indexing descisiona have on hardware requirements
 * Launch instance at least as much CPU as database server
 
 ```shell
-// Edit to put at LEAST your key in
-launchechec2.sh
+// Edit to put at LEAST your ssh key in `launchec2.sh`
+export AWS_ACCESS_KEY_ID="..."
+export AWS_SECRET_ACCESS_KEY="..."
+export AWS_SESSION_TOKEN="..."
+export  ATLAS_PUBLIC_KEY=""...""
+export ATLAS_PRIVATE_KEY="..."
+export ATLAS_PROJECT_ID="..."
+
+source launchec2.sh
 ```
 
 * Build the test harness
