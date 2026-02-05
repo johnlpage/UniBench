@@ -121,6 +121,8 @@ cache). This is using default of 3,000 Standard IOPS on Amazon Web Services
 with a 200 GB disk. Writes are using write concern majority, all reads are from
 the primary. The test harness is running in the same cloud provider region.
 
+All tests are of MongoDB version 8.0.
+
 In MongoDB, you can scale vertically by using larger hardware but also
 horizontally by adding more replica sets, most workloads will scale linearly to
 thousands of times the performance shown here via sharding.
